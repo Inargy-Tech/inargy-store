@@ -30,23 +30,16 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    // Safety net: if auth never resolves, stop the spinner after 10s
+    // Safety net: if auth never resolves, stop the spinner after 5s
     const timeout = setTimeout(() => {
       setLoading((prev) => {
         if (prev) console.warn('Auth loading timed out')
         return false
       })
-    }, 10_000)
+    }, 5_000)
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setLoading(false)
-    }).catch((err) => {
-      console.error('getSession failed:', err)
-      setLoading(false)
-    })
-
+    // Use onAuthStateChange exclusively — the INITIAL_SESSION event
+    // replaces getSession() and avoids its internal lock-hang issues.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user ?? null)
