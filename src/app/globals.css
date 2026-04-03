@@ -1,0 +1,77 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@theme inline {
+  --color-slate-green: #0A2E25;
+  --color-slate-light: #0D3A2F;
+  --color-slate-dark: #071F1A;
+  --color-volt: #D4ED31;
+  --color-volt-dim: #b8cf1e;
+  --color-muted: #627062;
+  --color-muted-dark: #4A5A4A;
+  --color-surface: #F8FAF8;
+  --color-border: #D5DDD5;
+  --color-border-light: #EEF2EE;
+  --color-danger: #E53E3E;
+  --color-success: #38A169;
+  --color-warning: #D69E2E;
+}
+
+body {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  background: #F8FAF8;
+  color: #0A2E25;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.3; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.animate-breathe {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation-duration: 0.01ms !important; }
+  .animate-breathe { animation-duration: 0.01ms !important; }
+}
+
+/* U3: Scroll hint for overflow tables on mobile */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    background:
+      linear-gradient(to right, white 30%, transparent),
+      linear-gradient(to left, white 30%, transparent),
+      linear-gradient(to right, rgba(0,0,0,.08), transparent 15px),
+      linear-gradient(to left, rgba(0,0,0,.08), transparent 15px);
+    background-position: left center, right center, left center, right center;
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%, 15px 100%, 15px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+}
+
+/* A6: Visible focus indicators for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--color-slate-green);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-slate-green);
+  outline-offset: 0;
+}
