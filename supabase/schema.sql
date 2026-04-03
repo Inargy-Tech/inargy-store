@@ -290,7 +290,10 @@ $$ language plpgsql security definer;
 create or replace function public.protect_role_field()
 returns trigger as $$
 begin
-  if new.role is distinct from old.role and not public.is_admin() then
+  -- auth.uid() is null when called from service role or SQL editor — allow it
+  if auth.uid() is not null
+     and new.role is distinct from old.role
+     and not public.is_admin() then
     raise exception 'Only admins can change user roles';
   end if;
   return new;

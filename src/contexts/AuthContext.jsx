@@ -30,10 +30,21 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    // Safety net: if auth never resolves, stop the spinner after 10s
+    const timeout = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) console.warn('Auth loading timed out')
+        return false
+      })
+    }, 10_000)
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       else setLoading(false)
+    }).catch((err) => {
+      console.error('getSession failed:', err)
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -48,7 +59,10 @@ export function AuthProvider({ children }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [fetchProfile])
 
   async function signUp(email, password, metadata = {}) {
