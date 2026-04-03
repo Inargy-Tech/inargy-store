@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import { Package, ChevronLeft } from 'lucide-react'
 import { createServerSupabase } from '../../../../lib/supabase-server'
 import NairaPrice from '../../../../components/ui/NairaPrice'
@@ -48,6 +49,8 @@ export default async function ProductDetailPage({ params }) {
     notFound()
   }
 
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -71,6 +74,7 @@ export default async function ProductDetailPage({ params }) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Breadcrumb */}
