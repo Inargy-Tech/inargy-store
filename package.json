@@ -13,6 +13,7 @@
   "dependencies": {
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
+    "@paystack/inline-js": "^2.22.8",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.0",
     "@tailwindcss/postcss": "^4.2.2",

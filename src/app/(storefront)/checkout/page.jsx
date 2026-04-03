@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@heroui/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -34,6 +34,12 @@ function CheckoutContent() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
+  const [currentOrder, setCurrentOrder] = useState(null)
+
+  // Reset current order if items change
+  useEffect(() => {
+    setCurrentOrder(null)
+  }, [items])
 
   function update(field) {
     return (e) => setForm({ ...form, [field]: e.target.value })
@@ -75,24 +81,29 @@ function CheckoutContent() {
       }
     }
 
-    const { data: order, error: orderError } = await createOrder({
-      items,
-      deliveryAddress: {
-        full_name: form.fullName,
-        phone: form.phone,
-        address: form.address,
-      },
-      paymentMethod: form.paymentMethod,
-      notes: form.notes,
-    })
+    let order = currentOrder
+    if (!order) {
+      const { data: newOrder, error: orderError } = await createOrder({
+        items,
+        deliveryAddress: {
+          full_name: form.fullName,
+          phone: form.phone,
+          address: form.address,
+        },
+        paymentMethod: form.paymentMethod,
+        notes: form.notes,
+      })
 
-    if (orderError) {
-      setLoading(false)
-      const msg = orderError.message || ''
-      const safePatterns = ['stock', 'unavailable', 'payment method', 'at least one item', 'delivery address']
-      const isSafe = safePatterns.some((p) => msg.toLowerCase().includes(p))
-      setError(isSafe ? msg : 'Could not place order. Please try again.')
-      return
+      if (orderError) {
+        setLoading(false)
+        const msg = orderError.message || ''
+        const safePatterns = ['stock', 'unavailable', 'payment method', 'at least one item', 'delivery address']
+        const isSafe = safePatterns.some((p) => msg.toLowerCase().includes(p))
+        setError(isSafe ? msg : 'Could not place order. Please try again.')
+        return
+      }
+      order = newOrder
+      setCurrentOrder(order)
     }
 
     if (form.paymentMethod === 'card') {
@@ -123,14 +134,12 @@ function CheckoutContent() {
           }
         } else {
           setLoading(false)
-          setError('Payment window was closed. Your order has been saved — you can complete payment later from your orders page.')
-          clearCart()
+          setError('Payment window was closed. You can try again or choose another payment method.')
           return
         }
       } catch (err) {
         setLoading(false)
-        setError(err.message || 'Payment failed. Your order has been saved — contact support if needed.')
-        clearCart()
+        setError(err.message || 'Payment failed. You can try again or contact support.')
         return
       }
     }

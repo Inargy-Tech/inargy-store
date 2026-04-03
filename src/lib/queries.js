@@ -6,13 +6,14 @@ const PAGE_SIZE = 20
 
 const ALLOWED_SORT_COLUMNS = new Set(['created_at', 'price_kobo', 'name', 'stock'])
 
-export async function getProducts({ category, search, sort = 'created_at', order = 'desc', page = 1 } = {}) {
+export async function getProducts({ category, search, sort = 'created_at', order = 'desc', page = 1 } = {}, customClient = null) {
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
   const safeSort = ALLOWED_SORT_COLUMNS.has(sort) ? sort : 'created_at'
+  const client = customClient || supabase
 
-  let query = supabase
+  let query = client
     .from('products')
     .select('*', { count: 'exact' })
     .eq('is_active', true)

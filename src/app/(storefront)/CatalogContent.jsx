@@ -4,7 +4,7 @@ import { Button } from '@heroui/react'
 import { Suspense } from 'react'
 import { BrandMark } from '../../assets/logo'
 import { useSearchParams } from 'next/navigation'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { getProducts } from '../../lib/queries'
 import ProductGrid from '../../components/storefront/ProductGrid'
@@ -27,12 +27,12 @@ const SORT_OPTIONS = [
   { value: 'name:asc', label: 'Name A–Z' },
 ]
 
-function CatalogInner() {
+function CatalogInner({ initialProducts = [], initialTotal = 0 }) {
   const searchParams = useSearchParams()
-  const [products, setProducts] = useState([])
-  const [total, setTotal] = useState(0)
+  const [products, setProducts] = useState(initialProducts)
+  const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '')
 
   const category = searchParams.get('category') || ''
@@ -64,7 +64,13 @@ function CatalogInner() {
     }
   }, [category, search, sortField, sortOrder, page])
 
+  const isFirstRender = useRef(true)
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     fetchProducts()
   }, [fetchProducts])
 
@@ -175,14 +181,14 @@ function CatalogInner() {
   )
 }
 
-export default function CatalogContent() {
+export default function CatalogContent({ initialProducts, initialTotal }) {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
         <BrandMark size={48} className="text-slate-green animate-breathe" />
       </div>
     }>
-      <CatalogInner />
+      <CatalogInner initialProducts={initialProducts} initialTotal={initialTotal} />
     </Suspense>
   )
 }
