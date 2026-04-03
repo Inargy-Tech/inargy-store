@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env
+.env.production
+.env.staging
 .env.staging
 .env.production
 .env.preprod

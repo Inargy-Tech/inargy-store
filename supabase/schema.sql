@@ -327,7 +327,10 @@ $$ language plpgsql security definer
 create or replace function public.protect_role_field()
 returns trigger as $$
 begin
-  if new.role is distinct from old.role and not public.is_admin() then
+  -- auth.uid() is null when called from service role or SQL editor — allow it
+  if auth.uid() is not null
+     and new.role is distinct from old.role
+     and not public.is_admin() then
     raise exception 'Only admins can change user roles';
   end if;
   return new;
@@ -342,7 +345,7 @@ create trigger protect_role_update
 
 -- ─── Sample seed data (optional) ─────────────────────────────────────────────
 -- Uncomment and run to populate your store with sample products.
-
+--
 -- insert into products (name, slug, category, description, price_kobo, stock) values
 --   ('400W Monocrystalline Solar Panel', '400w-mono-solar-panel', 'solar-panels',
 --    'High-efficiency monocrystalline silicon panel. 400W peak output. IP67 rated. 25-year power output warranty.',

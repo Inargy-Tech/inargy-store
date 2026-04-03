@@ -28,13 +28,18 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const [statsResult, ordersResult] = await Promise.all([
-        adminGetStats(),
-        adminGetOrders(),
-      ])
-      setStats(statsResult)
-      setRecentOrders((ordersResult.data || []).slice(0, 5))
-      setLoading(false)
+      try {
+        const [statsResult, ordersResult] = await Promise.all([
+          adminGetStats(),
+          adminGetOrders(),
+        ])
+        setStats(statsResult)
+        setRecentOrders((ordersResult.data || []).slice(0, 5))
+      } catch (err) {
+        console.error('Admin dashboard load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])

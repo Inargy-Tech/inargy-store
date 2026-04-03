@@ -27,7 +27,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
               "font-src 'self' data:",
-              `connect-src 'self' https://*.supabase.co https://*.supabase.in https://api.paystack.co${isDev ? ' ws://localhost:*' : ''}`,
+              `connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.paystack.co${isDev ? ' ws://localhost:*' : ''}`,
               "frame-src https://js.paystack.co https://checkout.paystack.com",
               "object-src 'none'",
               "base-uri 'self'",
