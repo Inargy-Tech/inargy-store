@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+const isDev = process.env.NODE_ENV === 'development'
+
 // In-memory rate limiter (per IP, per minute).
 // NOTE: This only works within a single process. In serverless / multi-instance
 // deployments, replace with a shared store (e.g. Redis, Upstash) for real enforcement.
@@ -17,6 +19,37 @@ function isRateLimited(ip) {
   }
   entry.count++
   return entry.count > RATE_LIMIT
+}
+
+function buildCsp(nonce) {
+  return [
+    "default-src 'self'",
+    [
+      "script-src 'self'",
+      `'nonce-${nonce}'`,
+      "'strict-dynamic'",
+      // Fallbacks ignored by browsers that support nonces, but needed for older ones
+      "'unsafe-inline'",
+      "https:",
+      isDev ? "'unsafe-eval'" : '',
+    ].filter(Boolean).join(' '),
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://*.paystack.co https://*.paystack.com https://*.vercel.app https://*.inargy.co https://*.inargy.tech",
+    "font-src 'self' data:",
+    [
+      "connect-src 'self'",
+      'https://*.supabase.co https://*.supabase.in wss://*.supabase.co',
+      'https://*.paystack.co https://*.paystack.com',
+      'https://*.vercel.app https://*.inargy.co https://*.inargy.tech',
+      isDev ? 'ws://localhost:*' : '',
+    ].filter(Boolean).join(' '),
+    "frame-src https://*.paystack.co https://*.paystack.com https://vercel.live https://*.vercel.app",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    isDev ? '' : 'upgrade-insecure-requests',
+  ].filter(Boolean).join('; ')
 }
 
 export async function middleware(request) {
@@ -48,8 +81,19 @@ export async function middleware(request) {
     }
   }
 
+  // Generate a fresh nonce per request for strict CSP
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const cspHeaderValue = buildCsp(nonce)
+
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', cspHeaderValue)
+
   // Refresh the Supabase auth session so cookies stay fresh across navigations
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
+  supabaseResponse.headers.set('Content-Security-Policy', cspHeaderValue)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -61,7 +105,10 @@ export async function middleware(request) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders },
+          })
+          supabaseResponse.headers.set('Content-Security-Policy', cspHeaderValue)
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )

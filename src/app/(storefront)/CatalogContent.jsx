@@ -88,6 +88,7 @@ function CatalogInner() {
           <input
             id="catalog-search"
             type="text"
+            autoComplete="off"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search products…"

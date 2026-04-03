@@ -108,6 +108,7 @@ export default function SignupPage() {
                   id="fullName"
                   type="text"
                   required
+                  autoComplete="name"
                   value={form.fullName}
                   onChange={update('fullName')}
                   placeholder="Amara Okafor"
@@ -125,6 +126,7 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={form.email}
                   onChange={update('email')}
                   placeholder="you@example.com"
@@ -143,6 +145,7 @@ export default function SignupPage() {
                 <input
                   id="phone"
                   type="tel"
+                  autoComplete="tel"
                   value={form.phone}
                   onChange={update('phone')}
                   placeholder="+234 800 000 0000"
@@ -160,6 +163,7 @@ export default function SignupPage() {
                   type="password"
                   required
                   minLength={8}
+                  autoComplete="new-password"
                   value={form.password}
                   onChange={update('password')}
                   placeholder="Min. 8 characters"
@@ -177,6 +181,7 @@ export default function SignupPage() {
                   id="confirmPassword"
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={form.confirm}
                   onChange={update('confirm')}
                   placeholder="Repeat password"
