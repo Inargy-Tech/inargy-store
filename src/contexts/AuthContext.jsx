@@ -30,18 +30,36 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    // Safety net: if auth never resolves, stop the spinner after 5s
-    const timeout = setTimeout(() => {
-      setLoading((prev) => {
-        if (prev) console.warn('Auth loading timed out')
-        return false
-      })
-    }, 5_000)
+    let mounted = true
 
-    // Use onAuthStateChange exclusively — the INITIAL_SESSION event
-    // replaces getSession() and avoids its internal lock-hang issues.
+    // Safety net: stop the spinner if auth never resolves
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        setLoading((prev) => {
+          if (prev) console.warn('Auth loading timed out')
+          return false
+        })
+      }
+    }, 8_000)
+
+    // 1. Hydrate immediately from cookies/storage (fast, no network)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchProfile(session.user.id)
+      } else {
+        setLoading(false)
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false)
+    })
+
+    // 2. Listen for ongoing changes (sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        if (!mounted || event === 'INITIAL_SESSION') return
+
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
@@ -53,6 +71,7 @@ export function AuthProvider({ children }) {
     )
 
     return () => {
+      mounted = false
       clearTimeout(timeout)
       subscription.unsubscribe()
     }
