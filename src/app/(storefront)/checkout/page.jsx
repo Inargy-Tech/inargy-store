@@ -224,23 +224,23 @@ function CheckoutContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
                   <label htmlFor="fullName" className="block text-sm font-medium text-slate-green mb-1.5">Full name *</label>
-                  <input id="fullName" type="text" required autoComplete="name" value={form.fullName} onChange={update('fullName')} placeholder="Amara Okafor" aria-describedby={error ? 'checkout-error' : undefined} className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+                  <input id="fullName" name="fullName" type="text" required autoComplete="shipping name" value={form.fullName} onChange={update('fullName')} placeholder="Amara Okafor" aria-describedby={error ? 'checkout-error' : undefined} className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="phone" className="block text-sm font-medium text-slate-green mb-1.5">Phone number *</label>
-                  <input id="phone" type="tel" required autoComplete="tel" value={form.phone} onChange={update('phone')} placeholder="+234 800 000 0000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+                  <input id="phone" name="phone" type="tel" required autoComplete="shipping tel" value={form.phone} onChange={update('phone')} placeholder="+234 800 000 0000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="address" className="block text-sm font-medium text-slate-green mb-1.5">Street address *</label>
-                  <input id="address" type="text" required autoComplete="street-address" value={form.address} onChange={update('address')} placeholder="12 Solar Avenue, GRA" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+                  <input id="address" name="address" type="text" required autoComplete="shipping street-address" value={form.address} onChange={update('address')} placeholder="12 Solar Avenue, GRA" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
                 </div>
                 <div>
                   <label htmlFor="city" className="block text-sm font-medium text-slate-green mb-1.5">City *</label>
-                  <input id="city" type="text" required autoComplete="address-level2" value={form.city} onChange={update('city')} placeholder="Lagos" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+                  <input id="city" name="city" type="text" required autoComplete="shipping address-level2" value={form.city} onChange={update('city')} placeholder="Lagos" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
                 </div>
                 <div>
                   <label htmlFor="state" className="block text-sm font-medium text-slate-green mb-1.5">State *</label>
-                  <input id="state" type="text" required autoComplete="address-level1" value={form.state} onChange={update('state')} placeholder="Lagos State" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+                  <input id="state" name="state" type="text" required autoComplete="shipping address-level1" value={form.state} onChange={update('state')} placeholder="Lagos State" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="notes" className="block text-sm font-medium text-slate-green mb-1.5">Order notes <span className="text-muted font-normal">(optional)</span></label>
