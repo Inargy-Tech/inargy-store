@@ -215,10 +215,8 @@ begin
   if p_delivery_address is null
      or p_delivery_address->>'full_name' is null
      or p_delivery_address->>'phone' is null
-     or p_delivery_address->>'address' is null
-     or p_delivery_address->>'city' is null
-     or p_delivery_address->>'state' is null then
-    raise exception 'Delivery address must include full_name, phone, address, city, and state';
+     or p_delivery_address->>'address' is null then
+    raise exception 'Delivery address must include full_name, phone, and address';
   end if;
 
   for v_item in select * from jsonb_to_recordset(p_items) as x(product_id uuid, quantity int)

@@ -103,11 +103,12 @@ export default function ProfilePage() {
         <Alert type={profileStatus.type} message={profileStatus.msg} />
         <form onSubmit={handleProfileSave} className="space-y-5">
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-slate-green mb-1.5">Full name</label>
+            <label htmlFor="profile-fullName" className="block text-sm font-medium text-slate-green mb-1.5">Full name</label>
             <div className="relative">
               <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input
-                id="fullName"
+                id="profile-fullName"
+                name="fullName"
                 type="text"
                 autoComplete="name"
                 value={profileForm.full_name}
@@ -119,11 +120,12 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-slate-green mb-1.5">Phone number</label>
+            <label htmlFor="profile-phone" className="block text-sm font-medium text-slate-green mb-1.5">Phone number</label>
             <div className="relative">
               <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input
-                id="phone"
+                id="profile-phone"
+                name="phone"
                 type="tel"
                 autoComplete="tel"
                 value={profileForm.phone}
@@ -135,11 +137,12 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-slate-green mb-1.5">Address</label>
+            <label htmlFor="profile-address" className="block text-sm font-medium text-slate-green mb-1.5">Address</label>
             <div className="relative">
               <MapPin size={16} className="absolute left-3.5 top-3.5 text-muted" />
               <textarea
-                id="address"
+                id="profile-address"
+                name="address"
                 autoComplete="street-address"
                 value={profileForm.address}
                 onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
@@ -166,11 +169,11 @@ export default function ProfilePage() {
         <Alert type={pwStatus.type} message={pwStatus.msg} />
         <form onSubmit={handlePasswordChange} className="space-y-5">
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-slate-green mb-1.5">New password</label>
+            <label htmlFor="profile-newPassword" className="block text-sm font-medium text-slate-green mb-1.5">New password</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input
-                id="newPassword"
+                id="profile-newPassword"
                 type="password"
                 required
                 minLength={8}
@@ -184,11 +187,11 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-slate-green mb-1.5">Confirm new password</label>
+            <label htmlFor="profile-confirmPassword" className="block text-sm font-medium text-slate-green mb-1.5">Confirm new password</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input
-                id="confirmNewPassword"
+                id="profile-confirmPassword"
                 type="password"
                 required
                 autoComplete="new-password"

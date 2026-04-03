@@ -63,7 +63,7 @@ create table if not exists orders (
   status              text not null default 'pending'
                         check (status in ('pending','processing','shipped','delivered','cancelled')),
   total_kobo          bigint not null check (total_kobo >= 0),
-  delivery_address    jsonb not null,          -- {full_name, phone, address, city, state}
+  delivery_address    jsonb not null,          -- {full_name, phone, address}
   payment_method      text not null default 'bank_transfer'
                         check (payment_method in ('bank_transfer','card','installment')),
   payment_reference   text unique,             -- Paystack transaction reference (card payments)
@@ -203,10 +203,8 @@ begin
   if p_delivery_address is null
      or p_delivery_address->>'full_name' is null
      or p_delivery_address->>'phone' is null
-     or p_delivery_address->>'address' is null
-     or p_delivery_address->>'city' is null
-     or p_delivery_address->>'state' is null then
-    raise exception 'Delivery address must include full_name, phone, address, city, and state';
+     or p_delivery_address->>'address' is null then
+    raise exception 'Delivery address must include full_name, phone, and address';
   end if;
 
   -- Lock each product row, validate availability, accumulate total.

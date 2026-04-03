@@ -65,7 +65,7 @@ export default function NewProductPage() {
       <h1 className="text-2xl font-bold text-slate-green mb-6">Add Product</h1>
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         {error && (
-          <div id="form-error" role="alert" className="flex items-center gap-2 p-3 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
+          <div id="new-product-error" role="alert" className="flex items-center gap-2 p-3 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
             <AlertCircle size={16} className="shrink-0" /> {error}
           </div>
         )}
@@ -73,7 +73,7 @@ export default function NewProductPage() {
           <h2 className="text-sm font-semibold text-slate-green mb-1">Basic Info</h2>
           <div>
             <label htmlFor="productName" className="block text-sm font-medium text-slate-green mb-1.5">Product name *</label>
-            <input id="productName" type="text" required value={form.name} onChange={handleNameChange} placeholder="e.g. 400W Monocrystalline Solar Panel" aria-describedby={error ? 'form-error' : undefined} className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+            <input id="productName" type="text" required value={form.name} onChange={handleNameChange} placeholder="e.g. 400W Monocrystalline Solar Panel" aria-describedby={error ? 'new-product-error' : undefined} className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
           </div>
           <div>
             <label htmlFor="slug" className="block text-sm font-medium text-slate-green mb-1.5">URL slug *</label>

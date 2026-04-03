@@ -65,21 +65,22 @@ export default function ResetPasswordPage() {
               </p>
 
               {error && (
-                <div id="form-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
+                <div id="reset-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
                   <AlertCircle size={16} className="shrink-0" />
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'form-error' : undefined}>
+              <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'reset-error' : undefined}>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-green mb-1.5">
+                  <label htmlFor="reset-email" className="block text-sm font-medium text-slate-green mb-1.5">
                     Email address
                   </label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
-                      id="email"
+                      id="reset-email"
+                      name="email"
                       type="email"
                       required
                       autoComplete="email"

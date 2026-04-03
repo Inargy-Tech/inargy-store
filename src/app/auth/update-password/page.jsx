@@ -59,21 +59,22 @@ export default function UpdatePasswordPage() {
               <p className="text-sm text-muted mb-8">Choose a strong password for your account.</p>
 
               {error && (
-                <div id="form-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
+                <div id="updatepw-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
                   <AlertCircle size={16} className="shrink-0" />
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'form-error' : undefined}>
+              <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'updatepw-error' : undefined}>
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-slate-green mb-1.5">
+                  <label htmlFor="updatepw-newPassword" className="block text-sm font-medium text-slate-green mb-1.5">
                     New password
                   </label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
-                      id="newPassword"
+                      id="updatepw-newPassword"
+                      name="newPassword"
                       type="password"
                       required
                       minLength={8}
@@ -88,13 +89,14 @@ export default function UpdatePasswordPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-green mb-1.5">
+                  <label htmlFor="updatepw-confirmPassword" className="block text-sm font-medium text-slate-green mb-1.5">
                     Confirm new password
                   </label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
-                      id="confirmPassword"
+                      id="updatepw-confirmPassword"
+                      name="confirmPassword"
                       type="password"
                       required
                       autoComplete="new-password"
