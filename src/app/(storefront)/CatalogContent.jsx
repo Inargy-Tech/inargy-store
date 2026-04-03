@@ -51,10 +51,17 @@ function CatalogInner() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
-    const { data, count } = await getProducts({ category, search, sort: sortField, order: sortOrder, page })
-    setProducts(data || [])
-    setTotal(count || 0)
-    setLoading(false)
+    try {
+      const { data, count } = await getProducts({ category, search, sort: sortField, order: sortOrder, page })
+      setProducts(data || [])
+      setTotal(count || 0)
+    } catch (err) {
+      console.error('Failed to fetch products:', err)
+      setProducts([])
+      setTotal(0)
+    } finally {
+      setLoading(false)
+    }
   }, [category, search, sortField, sortOrder, page])
 
   useEffect(() => {
