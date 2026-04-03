@@ -43,7 +43,7 @@ function buildCsp(nonce) {
       'https://*.vercel.app https://*.inargy.co https://*.inargy.tech',
       isDev ? 'ws://localhost:*' : '',
     ].filter(Boolean).join(' '),
-    "frame-src https://js.paystack.co https://checkout.paystack.com",
+    "frame-src https://js.paystack.co https://checkout.paystack.com https://vercel.live https://*.vercel.app",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
