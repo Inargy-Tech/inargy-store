@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "next dev",
+    "dev:staging": "dotenv -e .env.staging -- next dev",
     "build": "next build",
+    "build:staging": "dotenv -e .env.staging -- next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "dotenv-cli": "^11.0.0"
   }
 }
