@@ -9,7 +9,6 @@ create extension if not exists "uuid-ossp";
 -- Created automatically when a user signs up via a trigger.
 create table if not exists profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
-  email       text,
   full_name   text,
   phone       text,
   address     text,
@@ -21,22 +20,20 @@ create table if not exists profiles (
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, full_name, phone)
+  insert into public.profiles (id, full_name, phone)
   values (
     new.id,
-    new.email,
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'phone'
   );
   return new;
 end;
-$$ language plpgsql security definer
-   set search_path = public;
+$$ language plpgsql security definer;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute procedure public.handle_new_user();
 
 -- ─── Products ─────────────────────────────────────────────────────────────────
 create table if not exists products (
@@ -136,8 +133,7 @@ returns boolean as $$
   select exists (
     select 1 from profiles where id = auth.uid() and role = 'admin'
   );
-$$ language sql security definer stable
-   set search_path = public;
+$$ language sql security definer stable;
 
 -- Profiles policies
 create policy "Users can view own profile"   on profiles for select using (id = auth.uid());
@@ -149,15 +145,15 @@ create policy "Anyone can view active products"  on products for select using (i
 create policy "Admins can manage products"       on products for all using (public.is_admin());
 
 -- Orders policies
--- No direct insert policy for customers: orders must go through place_order() RPC
--- which runs as SECURITY DEFINER and validates pricing/stock server-side.
 create policy "Users can view own orders"    on orders for select using (user_id = auth.uid());
+create policy "Users can create orders"      on orders for insert with check (user_id = auth.uid());
 create policy "Admins can manage all orders" on orders for all using (public.is_admin());
 
 -- Order items policies
--- No direct insert policy for customers: order items are created by place_order().
 create policy "Users can view own order items" on order_items for select
   using (order_id in (select id from orders where user_id = auth.uid()));
+create policy "Users can insert order items"   on order_items for insert
+  with check (order_id in (select id from orders where user_id = auth.uid()));
 create policy "Admins can manage all order items" on order_items for all using (public.is_admin());
 
 -- Installments policies
@@ -199,18 +195,7 @@ begin
     raise exception 'Invalid payment method';
   end if;
 
-  -- Validate required delivery address fields
-  if p_delivery_address is null
-     or p_delivery_address->>'full_name' is null
-     or p_delivery_address->>'phone' is null
-     or p_delivery_address->>'address' is null
-     or p_delivery_address->>'city' is null
-     or p_delivery_address->>'state' is null then
-    raise exception 'Delivery address must include full_name, phone, address, city, and state';
-  end if;
-
-  -- Lock each product row, validate availability, accumulate total.
-  -- For card payments, stock is reserved but not decremented until payment is confirmed.
+  -- Lock each product row, validate availability, accumulate total, decrement stock
   for v_item in select * from jsonb_to_recordset(p_items) as x(product_id uuid, quantity int)
   loop
     select * into v_product
@@ -233,12 +218,8 @@ begin
 
     v_total_kobo := v_total_kobo + (v_product.price_kobo * v_item.quantity);
 
-    -- Decrement stock immediately for non-card payments.
-    -- Card orders decrement on payment confirmation via process_confirmed_payment().
-    if p_payment_method <> 'card' then
-      update products set stock = stock - v_item.quantity
-       where id = v_item.product_id;
-    end if;
+    update products set stock = stock - v_item.quantity
+     where id = v_item.product_id;
   end loop;
 
   -- Create order
@@ -260,68 +241,50 @@ begin
 
   return jsonb_build_object('id', v_order_id, 'total_kobo', v_total_kobo);
 end;
-$$ language plpgsql security definer
-   set search_path = public;
+$$ language plpgsql security definer;
 
--- ─── Card payment confirmation ────────────────────────────────────────────────
--- All card payment confirmations go through process_confirmed_payment() below,
--- which is called by server-side API routes (webhook + confirm) that verify
--- payment with Paystack before invoking it.  There is no client-callable RPC
--- for confirming card payments — this prevents users from faking references.
-
--- ─── Service-role payment confirmation RPC ───────────────────────────────────
--- Called by the /api/paystack/confirm route and the webhook handler (both run
--- with the service role key, so auth.uid() is not available).
--- Atomically: checks the order is still pending, decrements stock, confirms.
-create or replace function public.process_confirmed_payment(
+-- ─── Card payment confirmation RPC ───────────────────────────────────────────
+-- Called by the client after a successful Paystack popup payment.
+-- Stores the payment reference and advances the order to 'processing'.
+create or replace function public.confirm_card_payment(
   p_order_id uuid,
   p_payment_reference text
 )
 returns jsonb as $$
 declare
+  v_user_id uuid := auth.uid();
   v_order record;
-  v_item  record;
 begin
-  -- Lock the order row; abort if it is no longer pending
+  if v_user_id is null then
+    raise exception 'Authentication required';
+  end if;
+
   select * into v_order
     from orders
    where id = p_order_id
-     and status = 'pending'
-     and payment_method = 'card'
+     and user_id = v_user_id
      for update;
 
   if not found then
-    -- Already confirmed (webhook / client race) — idempotent success
-    return jsonb_build_object('ok', true, 'message', 'already_confirmed');
+    raise exception 'Order not found';
   end if;
 
-  -- Decrement stock for each order item; abort if any product has insufficient stock
-  for v_item in
-    select oi.product_id, oi.product_name, oi.quantity
-      from order_items oi
-     where oi.order_id = p_order_id
-  loop
-    update products
-       set stock = stock - v_item.quantity
-     where id = v_item.product_id
-       and stock >= v_item.quantity;
+  if v_order.payment_method <> 'card' then
+    raise exception 'Order does not use card payment';
+  end if;
 
-    if not found then
-      raise exception 'Insufficient stock for "%" (order %) — payment received but cannot fulfil',
-        v_item.product_name, p_order_id;
-    end if;
-  end loop;
+  if v_order.status <> 'pending' then
+    raise exception 'Order is no longer pending (status: %)', v_order.status;
+  end if;
 
-  -- Confirm the order
   update orders
-     set status = 'processing',
-         payment_reference = p_payment_reference
+     set payment_reference = p_payment_reference,
+         status = 'processing'
    where id = p_order_id;
 
-  return jsonb_build_object('ok', true);
+  return jsonb_build_object('id', p_order_id, 'status', 'processing');
 end;
-$$ language plpgsql security definer
-   set search_path = public;
+$$ language plpgsql security definer;
 
 -- ─── Prevent customers from escalating their own role ────────────────────────
 create or replace function public.protect_role_field()
@@ -332,17 +295,16 @@ begin
   end if;
   return new;
 end;
-$$ language plpgsql security definer
-   set search_path = public;
+$$ language plpgsql security definer;
 
 drop trigger if exists protect_role_update on profiles;
 create trigger protect_role_update
   before update on profiles
-  for each row execute function public.protect_role_field();
+  for each row execute procedure public.protect_role_field();
 
 -- ─── Sample seed data (optional) ─────────────────────────────────────────────
 -- Uncomment and run to populate your store with sample products.
-
+--
 -- insert into products (name, slug, category, description, price_kobo, stock) values
 --   ('400W Monocrystalline Solar Panel', '400w-mono-solar-panel', 'solar-panels',
 --    'High-efficiency monocrystalline silicon panel. 400W peak output. IP67 rated. 25-year power output warranty.',
@@ -355,5 +317,4 @@ create trigger protect_role_update
 --    38000000, 30),
 --   ('60A MPPT Solar Charge Controller', '60a-mppt-controller', 'controllers',
 --    'Maximum Power Point Tracking controller. 12/24/48V auto-detect. LCD display. Bluetooth monitoring.',
---    8500000, 40)
--- on conflict (slug) do nothing;
+--    8500000, 40);
