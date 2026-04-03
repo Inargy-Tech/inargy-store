@@ -77,6 +77,7 @@ export default function UpdatePasswordPage() {
                       type="password"
                       required
                       minLength={8}
+                      autoComplete="new-password"
                       value={form.password}
                       onChange={(e) => setForm({ ...form, password: e.target.value })}
                       placeholder="Min. 8 characters"
@@ -96,6 +97,7 @@ export default function UpdatePasswordPage() {
                       id="confirmPassword"
                       type="password"
                       required
+                      autoComplete="new-password"
                       value={form.confirm}
                       onChange={(e) => setForm({ ...form, confirm: e.target.value })}
                       placeholder="Repeat password"

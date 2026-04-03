@@ -77,6 +77,7 @@ export default function AdminProductsPage() {
         <input
           id="product-search"
           type="text"
+          autoComplete="off"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search products…"

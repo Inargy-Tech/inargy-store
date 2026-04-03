@@ -109,6 +109,7 @@ export default function ProfilePage() {
               <input
                 id="fullName"
                 type="text"
+                autoComplete="name"
                 value={profileForm.full_name}
                 onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
                 placeholder="Your full name"
@@ -124,6 +125,7 @@ export default function ProfilePage() {
               <input
                 id="phone"
                 type="tel"
+                autoComplete="tel"
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                 placeholder="+234 800 000 0000"
@@ -138,6 +140,7 @@ export default function ProfilePage() {
               <MapPin size={16} className="absolute left-3.5 top-3.5 text-muted" />
               <textarea
                 id="address"
+                autoComplete="street-address"
                 value={profileForm.address}
                 onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
                 rows={3}
@@ -171,6 +174,7 @@ export default function ProfilePage() {
                 type="password"
                 required
                 minLength={8}
+                autoComplete="new-password"
                 value={pwForm.password}
                 onChange={(e) => setPwForm({ ...pwForm, password: e.target.value })}
                 placeholder="Min. 8 characters"
@@ -187,6 +191,7 @@ export default function ProfilePage() {
                 id="confirmNewPassword"
                 type="password"
                 required
+                autoComplete="new-password"
                 value={pwForm.confirm}
                 onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
                 placeholder="Repeat password"
