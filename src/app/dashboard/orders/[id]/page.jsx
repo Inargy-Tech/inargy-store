@@ -77,8 +77,7 @@ export default function OrderDetailPage() {
           </div>
           <p className="text-sm text-slate-green font-medium">{addr.full_name}</p>
           <p className="text-sm text-muted">{addr.phone}</p>
-          <p className="text-sm text-muted mt-1">{addr.address}</p>
-          <p className="text-sm text-muted">{addr.city}, {addr.state}</p>
+          <p className="text-sm text-muted mt-1 whitespace-pre-line">{addr.address}</p>
         </div>
 
         {/* Payment */}

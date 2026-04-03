@@ -41,21 +41,22 @@ export default function LoginPage() {
           <p className="text-sm text-muted mb-8">Sign in to your Inargy account</p>
 
           {error && (
-            <div id="form-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
+            <div id="login-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
               <AlertCircle size={16} className="shrink-0" />
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'form-error' : undefined}>
+          <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'login-error' : undefined}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-green mb-1.5">
+              <label htmlFor="login-email" className="block text-sm font-medium text-slate-green mb-1.5">
                 Email address
               </label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input
-                  id="email"
+                  id="login-email"
+                  name="email"
                   type="email"
                   required
                   autoComplete="email"
@@ -70,7 +71,7 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-green">Password</label>
+                <label htmlFor="login-password" className="block text-sm font-medium text-slate-green">Password</label>
                 <Link
                   href="/auth/reset-password"
                   className="text-xs text-muted hover:text-slate-green transition-colors"
@@ -81,7 +82,8 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input
-                  id="password"
+                  id="login-password"
+                  name="password"
                   type="password"
                   required
                   autoComplete="current-password"

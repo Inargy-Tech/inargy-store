@@ -107,8 +107,7 @@ export default function AdminOrderDetailPage() {
           </div>
           <p className="text-sm font-medium text-slate-green">{addr.full_name || '—'}</p>
           <p className="text-sm text-muted">{addr.phone || '—'}</p>
-          <p className="text-sm text-muted mt-1">{addr.address}</p>
-          <p className="text-sm text-muted">{[addr.city, addr.state].filter(Boolean).join(', ')}</p>
+          <p className="text-sm text-muted mt-1 whitespace-pre-line">{addr.address}</p>
         </div>
 
         {/* Payment */}
