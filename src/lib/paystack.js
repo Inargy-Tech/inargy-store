@@ -1,6 +1,6 @@
 export async function openPaystackPopup({ email, amountKobo, reference, metadata }) {
   const key = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
-  if (!key) throw new Error('NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is not set')
+  if (!key) throw new Error('An error occured from our end. Please try again later.')
 
   // Dynamically import to ensure Window object exists (Client-side only)
   const PaystackModule = await import('@paystack/inline-js')

@@ -64,15 +64,15 @@ function CatalogInner({ initialProducts = [], initialTotal = 0 }) {
     }
   }, [category, search, sortField, sortOrder, page])
 
-  const isFirstRender = useRef(true)
-
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
-      return
+      if (initialProducts && initialProducts.length > 0) {
+        return
+      }
     }
     fetchProducts()
-  }, [fetchProducts])
+  }, [fetchProducts, initialProducts])
 
   useEffect(() => {
     const timer = setTimeout(() => {
