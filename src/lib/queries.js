@@ -15,7 +15,7 @@ export async function getProducts({ category, search, sort = 'created_at', order
 
   let query = client
     .from('products')
-    .select('*', { count: 'exact' })
+    .select('id, slug, name, image_url, category, price_kobo, stock, is_active, created_at', { count: 'exact' })
     .eq('is_active', true)
 
   if (category) query = query.eq('category', category)
@@ -276,11 +276,12 @@ export async function adminGetCustomers({ page = 1 } = {}) {
 // ─── Admin stats ─────────────────────────────────────────────────────────────
 
 export async function adminGetStats() {
+  const client = supabase
   const results = await Promise.allSettled([
-    supabase.from('orders').select('*', { count: 'exact', head: true }),
-    supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),
-    supabase.from('orders').select('total_kobo').in('status', ['processing', 'shipped', 'delivered']),
+    client.from('orders').select('*', { count: 'exact', head: true }),
+    client.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    client.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),
+    client.from('orders').select('total_kobo').in('status', ['processing', 'shipped', 'delivered']),
   ])
 
   const val = (i) => (results[i].status === 'fulfilled' ? results[i].value : {})

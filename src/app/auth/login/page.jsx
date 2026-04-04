@@ -19,8 +19,19 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+
+    // Prefer live form values at submit time to avoid stale state edge-cases.
+    const formData = new FormData(e.currentTarget)
+    const email = String(formData.get('email') || form.email || '').trim()
+    const password = String(formData.get('password') || form.password || '')
+
+    if (!email || !password) {
+      setError('Please enter your email and password.')
+      return
+    }
+
     setLoading(true)
-    const { error } = await signIn(form.email, form.password)
+    const { error } = await signIn(email, password)
     setLoading(false)
     if (error) {
       setError(error.message || 'Invalid email or password.')

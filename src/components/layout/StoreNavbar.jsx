@@ -10,7 +10,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
 
 export default function StoreNavbar() {
-  const { user, isAdmin, signOut } = useAuth()
+  const { user, isAdmin, signOut, loading } = useAuth()
   const { itemCount, setIsOpen } = useCart()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -77,7 +77,9 @@ export default function StoreNavbar() {
           </Button>
 
           {/* User menu */}
-          {user ? (
+          {loading ? (
+            <div className="w-10 h-10 rounded-full bg-slate-green/5 animate-pulse" />
+          ) : user ? (
             <div className="relative">
               <Button
                 variant="ghost"
@@ -143,6 +145,7 @@ export default function StoreNavbar() {
           ) : (
             <Link
               href="/auth/login"
+              data-testid="navbar-signin"
               className="hidden sm:inline-flex items-center gap-2 px-5 py-2 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
             >
               Sign In

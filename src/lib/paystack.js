@@ -1,31 +1,47 @@
-export async function openPaystackPopup({ email, amountKobo, reference, metadata }) {
-  const key = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
-  if (!key) throw new Error('An error occured from our end. Please try again later.')
+const PAYSTACK_INLINE_URL = 'https://js.paystack.co/v1/inline.js'
 
-  // Dynamically import to ensure Window object exists (Client-side only)
-  const PaystackModule = await import('@paystack/inline-js')
-  const PaystackPop = PaystackModule.default || PaystackModule
+let scriptPromise = null
+
+function loadScript() {
+  if (scriptPromise) return scriptPromise
+  scriptPromise = new Promise((resolve, reject) => {
+    if (window.PaystackPop) {
+      resolve()
+      return
+    }
+    const script = document.createElement('script')
+    script.src = PAYSTACK_INLINE_URL
+    script.async = true
+    script.onload = resolve
+    script.onerror = () => reject(new Error('Failed to load Paystack'))
+    document.head.appendChild(script)
+  })
+  return scriptPromise
+}
+
+export async function openPaystackPopup({ email, amountKobo, reference, metadata }) {
+  await loadScript()
+
+  const key = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+  if (!key) throw new Error('NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is not set')
 
   return new Promise((resolve, reject) => {
     try {
-      const paystack = new PaystackPop()
-      paystack.newTransaction({
+      const handler = window.PaystackPop.setup({
         key,
         email,
-        amount: Math.round(amountKobo), // ensure exact integer
-        reference,
+        amount: amountKobo,
+        ref: reference,
         currency: 'NGN',
         metadata: metadata || {},
-        onSuccess(response) {
+        callback(response) {
           resolve(response)
         },
-        onCancel() {
+        onClose() {
           resolve(null)
         },
-        onError(error) {
-          reject(error instanceof Error ? error : new Error('Paystack error'))
-        }
       })
+      handler.openIframe()
     } catch (err) {
       reject(err)
     }

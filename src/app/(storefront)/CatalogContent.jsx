@@ -29,10 +29,11 @@ const SORT_OPTIONS = [
 
 function CatalogInner({ initialProducts = [], initialTotal = 0 }) {
   const searchParams = useSearchParams()
+  const hasInitialData = initialProducts && initialProducts.length > 0
   const [products, setProducts] = useState(initialProducts)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(!hasInitialData)
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '')
 
   const category = searchParams.get('category') || ''
@@ -63,6 +64,8 @@ function CatalogInner({ initialProducts = [], initialTotal = 0 }) {
       setLoading(false)
     }
   }, [category, search, sortField, sortOrder, page])
+
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
     if (isFirstRender.current) {

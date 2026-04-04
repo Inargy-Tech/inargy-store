@@ -19,16 +19,10 @@ export default async function CatalogPage({ searchParams }) {
   const [sortField, sortOrder] = sortRaw.split(':')
   
   const supabaseServer = await createServerSupabase()
-  const { data, count, error } = await getProducts(
+  const { data, count } = await getProducts(
     { category, search, sort: sortField, order: sortOrder, page: 1 }, 
     supabaseServer
   )
-  
-  if (error) {
-    console.error('SSR getProducts Error:', error);
-  } else {
-    console.log(`SSR fetched ${data?.length} products. count = ${count}`);
-  }
 
   return <CatalogContent initialProducts={data || []} initialTotal={count || 0} />
 }

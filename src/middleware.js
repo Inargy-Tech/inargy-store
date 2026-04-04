@@ -33,9 +33,9 @@ function buildCsp(nonce) {
       "https:",
       isDev ? "'unsafe-eval'" : '',
     ].filter(Boolean).join(' '),
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://*.paystack.co https://*.paystack.com https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://*.paystack.co https://*.paystack.com https://*.vercel.app https://*.inargy.co https://*.inargy.tech",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com https://*.paystack.co https://*.paystack.com",
     [
       "connect-src 'self'",
       'https://*.supabase.co https://*.supabase.in wss://*.supabase.co',
@@ -95,29 +95,34 @@ export async function middleware(request) {
   })
   supabaseResponse.headers.set('Content-Security-Policy', cspHeaderValue)
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  // Skip the expensive Edge database lookup on public storefront routes
+  const isPublicStorefront = pathname === '/' || pathname.startsWith('/catalog') || pathname.startsWith('/product/')
+  
+  if (!isPublicStorefront) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            supabaseResponse = NextResponse.next({
+              request: { headers: requestHeaders },
+            })
+            supabaseResponse.headers.set('Content-Security-Policy', cspHeaderValue)
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request: { headers: requestHeaders },
-          })
-          supabaseResponse.headers.set('Content-Security-Policy', cspHeaderValue)
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
+      }
+    )
 
-  await supabase.auth.getUser()
+    await supabase.auth.getUser()
+  }
 
   return supabaseResponse
 }

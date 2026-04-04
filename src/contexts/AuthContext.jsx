@@ -24,15 +24,12 @@ export function AuthProvider({ children }) {
       setProfile(data || null)
     } catch (err) {
       console.error('Profile fetch failed:', err)
-    } finally {
-      setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     let mounted = true
 
-    // Safety net: stop the spinner if auth never resolves
     const timeout = setTimeout(() => {
       if (mounted) {
         setLoading((prev) => {
@@ -42,14 +39,12 @@ export function AuthProvider({ children }) {
       }
     }, 8_000)
 
-    // 1. Hydrate immediately from cookies/storage (fast, no network)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
       setUser(session?.user ?? null)
+      setLoading(false)
       if (session?.user) {
         fetchProfile(session.user.id)
-      } else {
-        setLoading(false)
       }
     }).catch(() => {
       if (mounted) setLoading(false)
@@ -62,10 +57,9 @@ export function AuthProvider({ children }) {
 
         setUser(session?.user ?? null)
         if (session?.user) {
-          await fetchProfile(session.user.id)
+          fetchProfile(session.user.id)
         } else {
           setProfile(null)
-          setLoading(false)
         }
       }
     )
