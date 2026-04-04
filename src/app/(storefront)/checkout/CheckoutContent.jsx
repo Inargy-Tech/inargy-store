@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState } from 'react'
 import { Button } from '@heroui/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, AlertCircle, CheckCircle, Truck, CreditCard, Smartphone, Building2 } from 'lucide-react'
-import { usePaystackPayment } from 'react-paystack'
 import { useCart } from '../../../contexts/CartContext'
 import { useAuth } from '../../../contexts/AuthContext'
 import { createOrder, getProductsByIds } from '../../../lib/queries'
+import { openPaystackPopup } from '../../../lib/paystack'
 import { supabase } from '../../../lib/supabase'
 import NairaPrice from '../../../components/ui/NairaPrice'
 import { formatNaira } from '../../../config'
@@ -33,75 +33,6 @@ export default function CheckoutContent() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
-  const [currentOrder, setCurrentOrder] = useState(null)
-  const [pendingPayment, setPendingPayment] = useState(false)
-
-  useEffect(() => {
-    setCurrentOrder(null)
-  }, [items])
-
-  const paystackRef = currentOrder ? `inargy_${currentOrder.id}` : ''
-  const paystackAmount = currentOrder?.total_kobo || totalKobo
-  const paystackOrderId = currentOrder?.id || ''
-  const paystackEmail = user?.email || ''
-  const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ''
-
-  const paystackConfig = useMemo(() => ({
-    reference: paystackRef,
-    email: paystackEmail,
-    amount: paystackAmount,
-    publicKey: paystackKey,
-    currency: 'NGN',
-    metadata: { order_id: paystackOrderId },
-  }), [paystackRef, paystackEmail, paystackAmount, paystackKey, paystackOrderId])
-
-  const initializePayment = usePaystackPayment(paystackConfig)
-
-  const onPaystackSuccess = useCallback(async (response) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const confirmRes = await fetch('/api/paystack/confirm', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token ?? ''}`,
-        },
-        body: JSON.stringify({ orderId: currentOrder.id, reference: response.reference }),
-      })
-      if (!confirmRes.ok) {
-        console.error('Client-side payment confirmation failed; webhook will confirm')
-      }
-    } catch (err) {
-      console.error('Payment confirmation error:', err)
-    }
-    setLoading(false)
-    clearCart()
-    setSuccess(currentOrder)
-  }, [currentOrder, clearCart])
-
-  const onPaystackClose = useCallback(() => {
-    setLoading(false)
-    setError('Payment window was closed. Your order has been saved — you can complete payment later from your orders page.')
-    clearCart()
-  }, [clearCart])
-
-  useEffect(() => {
-    if (pendingPayment && currentOrder) {
-      setPendingPayment(false)
-      initializePayment(onPaystackSuccess, onPaystackClose)
-
-      const safetyTimer = setTimeout(() => {
-        setLoading((prev) => {
-          if (prev) {
-            setError('Payment session timed out. Your order has been saved — you can complete payment later from your orders page.')
-            clearCart()
-          }
-          return false
-        })
-      }, 120_000)
-      return () => clearTimeout(safetyTimer)
-    }
-  }, [pendingPayment, currentOrder, initializePayment, onPaystackSuccess, onPaystackClose, clearCart])
 
   function update(field) {
     return (e) => setForm({ ...form, [field]: e.target.value })
@@ -140,34 +71,61 @@ export default function CheckoutContent() {
       }
     }
 
-    let order = currentOrder
-    if (!order) {
-      const { data: newOrder, error: orderError } = await createOrder({
-        items,
-        deliveryAddress: {
-          full_name: form.fullName,
-          phone: form.phone,
-          address: form.address,
-        },
-        paymentMethod: form.paymentMethod,
-        notes: form.notes,
-      })
+    const { data: order, error: orderError } = await createOrder({
+      items,
+      deliveryAddress: {
+        full_name: form.fullName,
+        phone: form.phone,
+        address: form.address,
+      },
+      paymentMethod: form.paymentMethod,
+      notes: form.notes,
+    })
 
-      if (orderError) {
-        setLoading(false)
-        const msg = orderError.message || ''
-        const safePatterns = ['stock', 'unavailable', 'payment method', 'at least one item', 'delivery address']
-        const isSafe = safePatterns.some((p) => msg.toLowerCase().includes(p))
-        setError(isSafe ? msg : 'Could not place order. Please try again.')
-        return
-      }
-      order = newOrder
-      setCurrentOrder(order)
+    if (orderError) {
+      setLoading(false)
+      const msg = orderError.message || ''
+      const safePatterns = ['stock', 'unavailable', 'payment method', 'at least one item', 'delivery address']
+      const isSafe = safePatterns.some((p) => msg.toLowerCase().includes(p))
+      setError(isSafe ? msg : 'Could not place order. Please try again.')
+      return
     }
 
     if (form.paymentMethod === 'card') {
-      setPendingPayment(true)
-      return
+      try {
+        const paystackRef = `inargy_${order.id}`
+        const response = await openPaystackPopup({
+          email: user.email,
+          amountKobo: order.total_kobo,
+          reference: paystackRef,
+          metadata: { order_id: order.id },
+        })
+
+        if (response) {
+          const { data: { session } } = await supabase.auth.getSession()
+          const confirmRes = await fetch('/api/paystack/confirm', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session?.access_token ?? ''}`,
+            },
+            body: JSON.stringify({ orderId: order.id, reference: response.reference }),
+          })
+          if (!confirmRes.ok) {
+            console.error('Client-side payment confirmation failed; webhook will confirm')
+          }
+        } else {
+          setLoading(false)
+          setError('Payment window was closed. Your order has been saved — you can complete payment later from your orders page.')
+          clearCart()
+          return
+        }
+      } catch (err) {
+        setLoading(false)
+        setError(err.message || 'Payment failed. Your order has been saved — contact support if needed.')
+        clearCart()
+        return
+      }
     }
 
     setLoading(false)
