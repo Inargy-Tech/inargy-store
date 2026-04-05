@@ -20,6 +20,33 @@ async function getAuthUser() {
   return { user, error }
 }
 
+function isRpcNotFoundError(err) {
+  const msg = String(err?.message || '').toLowerCase()
+  return (
+    msg.includes('could not find the function') ||
+    msg.includes('function') && msg.includes('does not exist') ||
+    msg.includes('no function matches')
+  )
+}
+
+async function confirmOrderViaRpc(supabase, orderId, reference) {
+  const rpcCandidates = [
+    { fn: 'process_confirmed_payment', args: { p_order_id: orderId, p_payment_reference: reference } },
+    { fn: 'confirm_card_payment', args: { p_order_id: orderId, p_payment_reference: reference } },
+  ]
+
+  let lastErr = null
+  for (const candidate of rpcCandidates) {
+    const { data, error } = await supabase.rpc(candidate.fn, candidate.args)
+    if (!error) return { data, error: null }
+    lastErr = error
+    if (!isRpcNotFoundError(error)) {
+      return { data: null, error }
+    }
+  }
+  return { data: null, error: lastErr }
+}
+
 export async function POST(request) {
   // 1. Authenticate the calling user
   const { user, error: authErr } = await getAuthUser()
@@ -50,7 +77,8 @@ export async function POST(request) {
   }
 
   const paystackData = await paystackRes.json()
-  if (!paystackData.status || paystackData.data?.status !== 'success') {
+  const paystackTxn = paystackData?.data
+  if (!paystackData?.status || paystackTxn?.status !== 'success') {
     return Response.json({ error: 'Payment not successful' }, { status: 400 })
   }
 
@@ -78,21 +106,24 @@ export async function POST(request) {
   }
 
   // 4. Verify amount: Paystack amount must cover the order total
-  if (paystackData.data.amount < order.total_kobo) {
+  const paidAmount = Number(paystackTxn?.amount || 0)
+  if (paidAmount < order.total_kobo) {
     console.error(
-      `Amount mismatch on confirm: Paystack=${paystackData.data.amount}, Order=${order.total_kobo}, ref=${reference}`
+      `Amount mismatch on confirm: Paystack=${paidAmount}, Order=${order.total_kobo}, ref=${reference}`
     )
     return Response.json({ error: 'Payment amount is less than order total' }, { status: 400 })
   }
 
   // 5. Use the atomic RPC to decrement stock + confirm (single transaction)
-  const { data: rpcResult, error: rpcErr } = await supabase.rpc('process_confirmed_payment', {
-    p_order_id: orderId,
-    p_payment_reference: reference,
-  })
+  const { data: rpcResult, error: rpcErr } = await confirmOrderViaRpc(supabase, orderId, reference)
 
   if (rpcErr) {
-    console.error('process_confirmed_payment failed:', rpcErr)
+    const message = String(rpcErr?.message || '')
+    const isStockIssue = message.toLowerCase().includes('insufficient stock')
+    console.error('Card payment confirmation RPC failed:', rpcErr)
+    if (isStockIssue) {
+      return Response.json({ error: 'Payment verified, but stock changed before confirmation.' }, { status: 409 })
+    }
     return Response.json({ error: 'Failed to confirm order' }, { status: 500 })
   }
 

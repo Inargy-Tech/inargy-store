@@ -8,6 +8,33 @@ function getServiceSupabase() {
   )
 }
 
+function isRpcNotFoundError(err) {
+  const msg = String(err?.message || '').toLowerCase()
+  return (
+    msg.includes('could not find the function') ||
+    msg.includes('function') && msg.includes('does not exist') ||
+    msg.includes('no function matches')
+  )
+}
+
+async function confirmOrderViaRpc(supabase, orderId, reference) {
+  const rpcCandidates = [
+    { fn: 'process_confirmed_payment', args: { p_order_id: orderId, p_payment_reference: reference } },
+    { fn: 'confirm_card_payment', args: { p_order_id: orderId, p_payment_reference: reference } },
+  ]
+
+  let lastErr = null
+  for (const candidate of rpcCandidates) {
+    const { data, error } = await supabase.rpc(candidate.fn, candidate.args)
+    if (!error) return { data, error: null }
+    lastErr = error
+    if (!isRpcNotFoundError(error)) {
+      return { data: null, error }
+    }
+  }
+  return { data: null, error: lastErr }
+}
+
 export async function POST(request) {
   // 1. Verify Paystack signature
   const secret = process.env.PAYSTACK_SECRET_KEY
@@ -78,13 +105,10 @@ export async function POST(request) {
     }
 
     // Atomically decrement stock + confirm the order via the service RPC
-    const { data: rpcResult, error: rpcErr } = await supabase.rpc('process_confirmed_payment', {
-      p_order_id: orderId,
-      p_payment_reference: reference,
-    })
+    const { data: rpcResult, error: rpcErr } = await confirmOrderViaRpc(supabase, orderId, reference)
 
     if (rpcErr) {
-      console.error('process_confirmed_payment failed for webhook:', rpcErr)
+      console.error('Card payment confirmation RPC failed for webhook:', rpcErr)
       return Response.json({ error: 'Update failed' }, { status: 500 })
     }
 

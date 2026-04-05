@@ -33,7 +33,8 @@ function buildCsp(nonce) {
       "https:",
       isDev ? "'unsafe-eval'" : '',
     ].filter(Boolean).join(' '),
-    "style-src 'self' 'unsafe-inline' https://*.paystack.co https://*.paystack.com https://fonts.googleapis.com",
+    "style-src 'self' 'unsafe-inline' https://paystack.co https://paystack.com https://*.paystack.co https://*.paystack.com https://fonts.googleapis.com",
+    "style-src-elem 'self' 'unsafe-inline' https://paystack.co https://paystack.com https://*.paystack.co https://*.paystack.com https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://*.paystack.co https://*.paystack.com https://*.vercel.app https://*.inargy.co https://*.inargy.tech",
     "font-src 'self' data: https://fonts.gstatic.com https://*.paystack.co https://*.paystack.com",
     [
@@ -43,7 +44,7 @@ function buildCsp(nonce) {
       'https://*.vercel.app https://*.inargy.co https://*.inargy.tech',
       isDev ? 'ws://localhost:*' : '',
     ].filter(Boolean).join(' '),
-    "frame-src https://*.paystack.co https://*.paystack.com https://vercel.live https://*.vercel.app",
+    "frame-src https://paystack.co https://paystack.com https://*.paystack.co https://*.paystack.com https://vercel.live https://*.vercel.app",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
