@@ -1,22 +1,20 @@
-import { Chip } from '@heroui/react'
-
-const statusColors = {
-  pending: 'warning',
-  processing: 'secondary',
-  shipped: 'secondary',
-  delivered: 'success',
-  cancelled: 'danger',
-  paid: 'success',
-  overdue: 'danger',
-  active: 'success',
-  inactive: 'default',
+const statusStyles = {
+  pending:    'bg-warning/10 text-warning',
+  processing: 'bg-slate-green/10 text-slate-green',
+  shipped:    'bg-volt/25 text-slate-green',
+  delivered:  'bg-success/10 text-success',
+  cancelled:  'bg-danger/10 text-danger',
+  paid:       'bg-success/10 text-success',
+  overdue:    'bg-danger/10 text-danger',
+  active:     'bg-success/10 text-success',
+  inactive:   'bg-border text-muted',
 }
 
 export default function StatusBadge({ status }) {
-  const color = statusColors[status] || 'default'
+  const styles = statusStyles[status] || 'bg-border text-muted'
   return (
-    <Chip color={color} variant="flat" size="sm" className="capitalize">
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${styles}`}>
       {status}
-    </Chip>
+    </span>
   )
 }
