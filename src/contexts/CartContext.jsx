@@ -28,48 +28,54 @@ export function CartProvider({ children }) {
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (isMounted) {
-      saveCart(items)
-    }
-  }, [items, isMounted])
-
   const addItem = useCallback((product, quantity = 1) => {
     setItems((prev) => {
+      let newItems
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
         const maxQty = product.stock ?? Infinity
-        return prev.map((item) =>
+        newItems = prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: Math.min(item.quantity + quantity, maxQty) }
             : item
         )
+      } else {
+        newItems = [...prev, { ...product, quantity: Math.min(quantity, product.stock ?? Infinity) }]
       }
-      return [...prev, { ...product, quantity: Math.min(quantity, product.stock ?? Infinity) }]
+      saveCart(newItems)
+      return newItems
     })
     setIsOpen(true)
   }, [])
 
   const updateQuantity = useCallback((productId, quantity) => {
-    if (quantity <= 0) {
-      setItems((prev) => prev.filter((item) => item.id !== productId))
-      return
-    }
-    setItems((prev) =>
-      prev.map((item) => {
+    setItems((prev) => {
+      if (quantity <= 0) {
+        const newItems = prev.filter((item) => item.id !== productId)
+        saveCart(newItems)
+        return newItems
+      }
+      const newItems = prev.map((item) => {
         if (item.id !== productId) return item
         const maxQty = item.stock ?? Infinity
         return { ...item, quantity: Math.min(quantity, maxQty) }
       })
-    )
+      saveCart(newItems)
+      return newItems
+    })
   }, [])
 
   const removeItem = useCallback((productId) => {
-    setItems((prev) => prev.filter((item) => item.id !== productId))
+    setItems((prev) => {
+      const newItems = prev.filter((item) => item.id !== productId)
+      saveCart(newItems)
+      return newItems
+    })
   }, [])
 
   const clearCart = useCallback(() => {
     setItems([])
+    saveCart([])
   }, [])
 
   const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])

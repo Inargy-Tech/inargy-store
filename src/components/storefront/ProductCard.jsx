@@ -8,7 +8,7 @@ import { ShoppingCart, Package } from 'lucide-react'
 import { useCart } from '../../contexts/CartContext'
 import NairaPrice from '../ui/NairaPrice'
 
-export default memo(function ProductCard({ product }) {
+export default memo(function ProductCard({ product, priority = false }) {
   const { addItem } = useCart()
 
   return (
@@ -20,11 +20,12 @@ export default memo(function ProductCard({ product }) {
             src={product.image_url}
             alt={product.name}
             fill
+            priority={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted">
+          <div className="w-full h-full flex items-center justify-center text-muted" role="img" aria-label={product.name}>
             <Package size={48} strokeWidth={1} />
           </div>
         )}

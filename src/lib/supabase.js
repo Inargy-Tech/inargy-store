@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -9,6 +9,42 @@ if (!supabaseUrl || !supabaseKey) {
   )
 }
 
-// Use createBrowserClient so the client reads the same cookies
-// the middleware sets via @supabase/ssr — avoids session mismatch.
-export const supabase = createBrowserClient(supabaseUrl, supabaseKey)
+const isBrowser = typeof window !== 'undefined'
+
+const noopStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+}
+
+// Node.js 25 can expose a broken global localStorage when started with an
+// invalid --localstorage-file argument (Next dev currently does this).
+// Supabase may probe globalThis.localStorage even on server code paths.
+if (!isBrowser && typeof globalThis.localStorage !== 'undefined') {
+  try {
+    if (typeof globalThis.localStorage.getItem !== 'function') {
+      delete globalThis.localStorage
+    } else {
+      globalThis.localStorage.getItem('__probe__')
+    }
+  } catch {
+    delete globalThis.localStorage
+  }
+}
+
+function getBrowserStorage() {
+  try {
+    window.localStorage.getItem('__test__')
+    return window.localStorage
+  } catch {
+    return noopStorage
+  }
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storage: isBrowser ? getBrowserStorage() : noopStorage,
+    autoRefreshToken: isBrowser,
+    detectSessionInUrl: isBrowser,
+  },
+})

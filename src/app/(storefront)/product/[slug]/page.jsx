@@ -108,7 +108,7 @@ export default async function ProductDetailPage({ params }) {
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted">
+            <div className="w-full h-full flex items-center justify-center text-muted" role="img" aria-label={product.name}>
               <Package size={80} strokeWidth={1} />
             </div>
           )}
