@@ -152,6 +152,9 @@ create policy "Admins can manage products"       on products for all using (publ
 -- No direct insert policy for customers: orders must go through place_order() RPC
 -- which runs as SECURITY DEFINER and validates pricing/stock server-side.
 create policy "Users can view own orders"    on orders for select using (user_id = auth.uid());
+create policy "Users can cancel own pending orders" on orders for update
+  using  (user_id = auth.uid() and status = 'pending')
+  with check (status = 'cancelled');
 create policy "Admins can manage all orders" on orders for all using (public.is_admin());
 
 -- Order items policies
@@ -340,6 +343,23 @@ drop trigger if exists protect_role_update on profiles;
 create trigger protect_role_update
   before update on profiles
   for each row execute function public.protect_role_field();
+
+-- ─── Storage ─────────────────────────────────────────────────────────────────
+-- Product image uploads. Run this after creating the bucket in the Supabase dashboard
+-- (Storage > New bucket > "product-images", Public bucket = true).
+--
+insert into storage.buckets (id, name, public)
+  values ('product-images', 'product-images', true)
+  on conflict (id) do nothing;
+
+-- Admins can upload/delete product images; anyone can read them (public bucket).
+create policy "Admins can upload product images"
+  on storage.objects for insert
+  with check (bucket_id = 'product-images' and public.is_admin());
+
+create policy "Admins can delete product images"
+  on storage.objects for delete
+  using (bucket_id = 'product-images' and public.is_admin());
 
 -- ─── Sample seed data (optional) ─────────────────────────────────────────────
 -- Uncomment and run to populate your store with sample products.

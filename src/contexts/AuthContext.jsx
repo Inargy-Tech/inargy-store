@@ -9,8 +9,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
 
   const fetchProfile = useCallback(async function fetchProfile(userId) {
+    setProfileLoading(true)
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -24,6 +26,8 @@ export function AuthProvider({ children }) {
       setProfile(data || null)
     } catch (err) {
       console.error('Profile fetch failed:', err)
+    } finally {
+      setProfileLoading(false)
     }
   }, [])
 
@@ -108,13 +112,14 @@ export function AuthProvider({ children }) {
     user,
     profile,
     loading,
+    profileLoading,
     isAdmin: profile?.role === 'admin',
     signUp,
     signIn,
     signOut,
     resetPassword,
     refreshProfile: () => user && fetchProfile(user.id),
-  }), [user, profile, loading, fetchProfile])
+  }), [user, profile, loading, profileLoading, fetchProfile])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

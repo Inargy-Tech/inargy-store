@@ -5,8 +5,8 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@heroui/react'
-import { ChevronLeft, AlertCircle, CheckCircle } from 'lucide-react'
-import { adminGetProductById, updateProduct } from '../../../../lib/queries'
+import { ChevronLeft, AlertCircle, CheckCircle, UploadCloud } from 'lucide-react'
+import { adminGetProductById, updateProduct, uploadProductImage } from '../../../../lib/queries'
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner'
 
 const CATEGORIES = ['solar-panels', 'inverters', 'batteries', 'controllers', 'accessories']
@@ -27,6 +27,7 @@ export default function EditProductPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [slugEdited, setSlugEdited] = useState(true)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -124,11 +125,41 @@ export default function EditProductPage() {
         </div>
         <div className="bg-white rounded-2xl border border-border p-6 space-y-5">
           <h2 className="text-sm font-semibold text-slate-green mb-1">Media</h2>
-          <div>
-            <label htmlFor="edit-image" className="block text-sm font-medium text-slate-green mb-1.5">Image URL</label>
-            <input id="edit-image" type="url" value={form.image_url} onChange={update('image_url')} placeholder="https://…" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors" />
+          <div className="flex gap-4 items-start">
+            <div className="flex-1">
+              <label htmlFor="edit-imageUpload" className="block text-sm font-medium text-slate-green mb-1.5">Product image</label>
+              <label htmlFor="edit-imageUpload" className={`flex items-center gap-3 px-4 py-2.5 border border-dashed rounded-xl text-sm cursor-pointer transition-colors ${uploading ? 'border-border text-muted' : 'border-slate-green/40 hover:border-slate-green text-muted hover:text-slate-green'}`}>
+                <UploadCloud size={18} className="shrink-0" />
+                {uploading ? 'Uploading…' : 'Choose file to upload'}
+              </label>
+              <input
+                id="edit-imageUpload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={uploading}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  setUploading(true)
+                  setError(''); setSuccess('')
+                  const { url, error: uploadError } = await uploadProductImage(file)
+                  setUploading(false)
+                  if (uploadError) setError('Image upload failed: ' + (uploadError.message || 'Unknown error'))
+                  else setForm((f) => ({ ...f, image_url: url }))
+                  e.target.value = ''
+                }}
+              />
+              {form.image_url && (
+                <p className="text-xs text-muted mt-1.5 truncate" title={form.image_url}>{form.image_url}</p>
+              )}
+            </div>
+            {form.image_url && (
+              <div className="w-24 h-24 rounded-xl overflow-hidden border border-border relative shrink-0">
+                <Image src={form.image_url} alt="Preview" fill sizes="96px" className="object-cover" />
+              </div>
+            )}
           </div>
-          {form.image_url && (<div className="w-32 h-32 rounded-xl overflow-hidden border border-border relative"><Image src={form.image_url} alt="Preview" fill sizes="128px" className="object-cover" /></div>)}
         </div>
         <div className="bg-white rounded-2xl border border-border p-6">
           <label className="flex items-center gap-3 cursor-pointer">

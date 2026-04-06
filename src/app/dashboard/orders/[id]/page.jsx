@@ -4,12 +4,65 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronLeft, Package, MapPin, CreditCard } from 'lucide-react'
+import { ChevronLeft, Package, MapPin, CreditCard, XCircle, Check } from 'lucide-react'
 import { useAuth } from '../../../../contexts/AuthContext'
-import { getOrderById } from '../../../../lib/queries'
+import { getOrderById, cancelOrder } from '../../../../lib/queries'
 import StatusBadge from '../../../../components/ui/StatusBadge'
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner'
+import ConfirmModal from '../../../../components/ui/ConfirmModal'
 import { formatNaira, formatDate } from '../../../../config'
+
+const STEPS = [
+  { key: 'pending',    label: 'Order Placed',  description: 'Your order has been received.' },
+  { key: 'processing', label: 'Processing',    description: 'Payment confirmed, preparing your order.' },
+  { key: 'shipped',    label: 'Shipped',        description: 'Your order is on its way.' },
+  { key: 'delivered',  label: 'Delivered',      description: 'Order delivered successfully.' },
+]
+
+const STEP_INDEX = { pending: 0, processing: 1, shipped: 2, delivered: 3 }
+
+function OrderTimeline({ status }) {
+  const current = STEP_INDEX[status] ?? 0
+  return (
+    <div className="bg-white rounded-2xl border border-border p-5 mb-6">
+      <div className="flex items-center justify-between relative">
+        {/* connector line */}
+        <div className="absolute top-4 left-4 right-4 h-0.5 bg-border-light" aria-hidden="true" />
+        <div
+          className="absolute top-4 left-4 h-0.5 bg-volt transition-all duration-500"
+          style={{ width: `${(current / (STEPS.length - 1)) * 100}%` }}
+          aria-hidden="true"
+        />
+        {STEPS.map((step, i) => {
+          const done = i < current
+          const active = i === current
+          return (
+            <div key={step.key} className="relative flex flex-col items-center gap-2 flex-1">
+              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 transition-colors ${
+                done  ? 'bg-volt border-volt' :
+                active ? 'bg-white border-slate-green' :
+                         'bg-white border-border'
+              }`}>
+                {done ? (
+                  <Check size={14} className="text-slate-green" strokeWidth={3} />
+                ) : (
+                  <div className={`w-2 h-2 rounded-full ${active ? 'bg-slate-green' : 'bg-border'}`} />
+                )}
+              </div>
+              <div className="text-center hidden sm:block">
+                <p className={`text-xs font-semibold ${active ? 'text-slate-green' : done ? 'text-muted' : 'text-border'}`}>
+                  {step.label}
+                </p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <p className="text-xs text-muted text-center mt-4 sm:hidden font-medium">{STEPS[current].label}</p>
+      <p className="text-xs text-muted text-center mt-1">{STEPS[current].description}</p>
+    </div>
+  )
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams()
@@ -17,6 +70,9 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [showCancel, setShowCancel] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -27,6 +83,19 @@ export default function OrderDetailPage() {
     }
     load()
   }, [id, user.id])
+
+  async function handleCancel() {
+    setCancelling(true)
+    setCancelError('')
+    const { data, error } = await cancelOrder(order.id)
+    setCancelling(false)
+    if (error) {
+      setCancelError(error.message || 'Could not cancel order.')
+    } else {
+      setOrder(data)
+      setShowCancel(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -65,8 +134,38 @@ export default function OrderDetailPage() {
           </h1>
           <p className="text-sm text-muted mt-1">Placed on {formatDate(order.created_at)}</p>
         </div>
-        <StatusBadge status={order.status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={order.status} />
+          {order.status === 'pending' && (
+            <button
+              onClick={() => { setCancelError(''); setShowCancel(true) }}
+              className="inline-flex items-center gap-1.5 text-sm text-danger hover:text-danger/80 transition-colors"
+            >
+              <XCircle size={16} /> Cancel order
+            </button>
+          )}
+        </div>
       </div>
+
+      {cancelError && (
+        <p className="mb-4 text-sm text-danger">{cancelError}</p>
+      )}
+
+      <ConfirmModal
+        isOpen={showCancel}
+        onClose={() => setShowCancel(false)}
+        onConfirm={handleCancel}
+        title="Cancel this order?"
+        message="This cannot be undone. If you've already made a payment, please contact support."
+        confirmLabel="Yes, cancel order"
+        danger
+        loading={cancelling}
+      />
+
+      {/* Order timeline */}
+      {order.status !== 'cancelled' && (
+        <OrderTimeline status={order.status} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Delivery address */}

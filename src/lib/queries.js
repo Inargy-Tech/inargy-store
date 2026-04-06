@@ -80,6 +80,19 @@ export async function deleteProduct(id) {
   return { error }
 }
 
+export async function uploadProductImage(file) {
+  const ext = file.name.split('.').pop()
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { data, error } = await supabase.storage
+    .from('product-images')
+    .upload(path, file, { cacheControl: '3600', upsert: false })
+  if (error) return { url: null, error }
+  const { data: { publicUrl } } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(data.path)
+  return { url: publicUrl, error: null }
+}
+
 export async function getProductsByIds(ids) {
   if (!ids || ids.length === 0) return { data: [], error: null }
   const { data, error } = await supabase
@@ -145,6 +158,16 @@ export async function adminGetOrders({ status, page = 1 } = {}) {
 
   const { data, error, count } = await query
   return { data, error, count }
+}
+
+export async function cancelOrder(orderId) {
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ status: 'cancelled' })
+    .eq('id', orderId)
+    .select()
+    .single()
+  return { data, error }
 }
 
 export async function updateOrderStatus(id, status) {

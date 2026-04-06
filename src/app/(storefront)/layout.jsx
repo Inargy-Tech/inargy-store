@@ -10,7 +10,9 @@ export default function StorefrontLayout({ children }) {
       </a>
       <StoreNavbar />
       <main id="main-content" className="flex-1">
-        {children}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
       </main>
       <StoreFooter />
       <CartDrawer />

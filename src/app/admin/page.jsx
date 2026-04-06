@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
           icon={Users}
           label="Customers"
           value={stats?.totalCustomers ?? '—'}
-          color="bg-blue-600"
+          color="bg-muted-dark"
         />
         <StatCard
           icon={Package}

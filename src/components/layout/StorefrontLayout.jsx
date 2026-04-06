@@ -8,7 +8,9 @@ export default function StorefrontLayout() {
     <div className="min-h-screen flex flex-col">
       <StoreNavbar />
       <main className="flex-1">
-        <Outlet />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Outlet />
+        </div>
       </main>
       <StoreFooter />
       <CartDrawer />

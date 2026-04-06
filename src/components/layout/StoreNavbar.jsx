@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@heroui/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart, User, Menu, X, LogOut, Package, LayoutDashboard } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, LogOut, Package, LayoutDashboard, Search } from 'lucide-react'
 import { Logo, BrandMark } from '../../assets/logo'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
@@ -15,6 +15,16 @@ export default function StoreNavbar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  function handleSearchSubmit(e) {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+    router.push(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`)
+    setSearchQuery('')
+    setSearchOpen(false)
+  }
 
   async function handleSignOut() {
     await signOut()
@@ -57,6 +67,37 @@ export default function StoreNavbar() {
           >
             Batteries
           </Link>
+        </div>
+
+        {/* Search — desktop expandable */}
+        <div className="hidden md:flex items-center">
+          {searchOpen ? (
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+              <input
+                autoFocus
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
+                placeholder="Search products…"
+                className="w-52 px-4 py-2 text-sm border border-slate-green/30 rounded-full focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors bg-white"
+              />
+              <button type="submit" aria-label="Search" className="p-2 rounded-full hover:bg-slate-green/5 transition-colors">
+                <Search size={18} className="text-slate-green" />
+              </button>
+              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search" className="p-2 rounded-full hover:bg-slate-green/5 transition-colors">
+                <X size={18} className="text-slate-green" />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Open search"
+              className="p-2 rounded-full hover:bg-slate-green/5 transition-colors"
+            >
+              <Search size={20} className="text-slate-green" />
+            </button>
+          )}
         </div>
 
         {/* Right actions */}
@@ -172,6 +213,18 @@ export default function StoreNavbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-white px-4 py-4 space-y-1">
+          <form onSubmit={(e) => { handleSearchSubmit(e); setMobileOpen(false) }} className="flex items-center gap-2 mb-2">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products…"
+              className="flex-1 px-4 py-2 text-sm border border-border rounded-full focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors bg-white"
+            />
+            <button type="submit" aria-label="Search" className="p-2 rounded-full hover:bg-slate-green/5 transition-colors">
+              <Search size={18} className="text-slate-green" />
+            </button>
+          </form>
           <Link
             href="/catalog"
             onClick={() => setMobileOpen(false)}

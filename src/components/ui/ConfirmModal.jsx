@@ -25,14 +25,21 @@ export default function ConfirmModal({
               <p className="text-sm text-muted">{message}</p>
             </AlertDialog.Body>
             <AlertDialog.Footer>
-              <Button variant="light" onPress={onClose}>
+              <Button
+                variant="light"
+                onPress={onClose}
+                className="text-muted font-medium"
+              >
                 Cancel
               </Button>
               <Button
-                color={danger ? 'danger' : 'primary'}
                 onPress={onConfirm}
                 isLoading={loading}
-                className={danger ? '' : 'bg-slate-green'}
+                className={
+                  danger
+                    ? 'bg-danger text-white font-semibold rounded-full hover:bg-danger/90 transition-colors'
+                    : 'bg-slate-green text-white font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors'
+                }
               >
                 {confirmLabel}
               </Button>
