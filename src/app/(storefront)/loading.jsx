@@ -1,6 +1,6 @@
 export default function StorefrontLoading() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="py-10">
       {/* Title skeleton */}
       <div className="h-8 w-48 bg-border/50 rounded-lg animate-pulse mb-8" />
 

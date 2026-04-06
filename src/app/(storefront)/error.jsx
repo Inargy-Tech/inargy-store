@@ -34,7 +34,7 @@ export default function StorefrontError({ error, reset }) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+    <div className="py-20 text-center">
       <div className="w-16 h-16 bg-danger/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <AlertTriangle size={32} className="text-danger" />
       </div>

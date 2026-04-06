@@ -148,7 +148,7 @@ export default function CheckoutContent() {
 
   if (items.length === 0 && !success) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+      <div className="py-20 text-center">
         <div className="w-20 h-20 bg-surface rounded-2xl flex items-center justify-center mx-auto mb-6">
           <ShoppingBag size={36} strokeWidth={1} className="text-muted" />
         </div>
@@ -166,7 +166,7 @@ export default function CheckoutContent() {
 
   if (success) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="py-20">
         <div className="max-w-lg mx-auto text-center">
           <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-success" />
@@ -204,7 +204,7 @@ export default function CheckoutContent() {
   const grandTotal = totalKobo + deliveryFee
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="py-10">
       <h1 className="text-2xl font-bold text-slate-green mb-8">Checkout</h1>
 
       <form onSubmit={handleSubmit}>
