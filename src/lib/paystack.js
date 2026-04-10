@@ -2,6 +2,10 @@ const PAYSTACK_INLINE_URL = 'https://js.paystack.co/v1/inline.js'
 
 let scriptPromise = null
 
+function getNonce() {
+  return document.querySelector('html')?.getAttribute('nonce') ?? undefined
+}
+
 function loadScript() {
   if (scriptPromise) return scriptPromise
   scriptPromise = new Promise((resolve, reject) => {
@@ -13,6 +17,8 @@ function loadScript() {
     script.src = PAYSTACK_INLINE_URL
     script.async = true
     script.crossOrigin = 'anonymous'
+    const nonce = getNonce()
+    if (nonce) script.nonce = nonce
     script.onload = resolve
     script.onerror = () => reject(new Error('Failed to load Paystack'))
     document.head.appendChild(script)

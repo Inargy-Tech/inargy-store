@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google'
+import { headers } from 'next/headers'
 import './globals.css'
 import Providers from './Providers'
 
@@ -49,12 +50,15 @@ const organizationJsonLd = {
   description: 'Affordable solar energy systems for Nigerian homes and businesses.',
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} nonce={nonce} suppressHydrationWarning>
       <body className={inter.className}>
         <script
           type="application/ld+json"
+          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <Providers>{children}</Providers>

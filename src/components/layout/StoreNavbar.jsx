@@ -84,7 +84,7 @@ export default function StoreNavbar() {
         </div>
 
         {/* Right actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-auto">
           {/* Cart button */}
           <Button
             variant="ghost"
@@ -170,7 +170,7 @@ export default function StoreNavbar() {
             <Link
               href="/auth/login"
               data-testid="navbar-signin"
-              className="hidden sm:inline-flex items-center gap-2 px-5 py-2 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
+              className="hidden md:inline-flex items-center gap-2 px-5 py-2 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
             >
               Sign In
             </Link>
