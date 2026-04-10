@@ -34,43 +34,15 @@ export default function StoreNavbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-border">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-slate-green">
+        <Link href="/" className="flex-none flex items-center gap-2 text-slate-green">
           <BrandMark size={44} className="sm:hidden" />
           <Logo height={40} className="hidden sm:block" />
         </Link>
 
-        {/* Desktop nav links */}
-        <div className={`hidden items-center gap-8 ${searchOpen ? '' : 'md:flex'}`}>
-          <Link
-            href="/catalog"
-            className="text-sm font-medium text-muted hover:text-slate-green transition-colors"
-          >
-            All Products
-          </Link>
-          <Link
-            href="/catalog?category=solar-panels"
-            className="text-sm font-medium text-muted hover:text-slate-green transition-colors"
-          >
-            Solar Panels
-          </Link>
-          <Link
-            href="/catalog?category=inverters"
-            className="text-sm font-medium text-muted hover:text-slate-green transition-colors"
-          >
-            Inverters
-          </Link>
-          <Link
-            href="/catalog?category=batteries"
-            className="text-sm font-medium text-muted hover:text-slate-green transition-colors"
-          >
-            Batteries
-          </Link>
-        </div>
-
-        {/* Search — desktop expandable */}
-        <div className="hidden md:flex items-center">
+        {/* Desktop centre: nav links + search icon, or search form */}
+        <div className="flex-1 hidden md:flex items-center justify-center">
           {searchOpen ? (
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
               <input
@@ -87,13 +59,27 @@ export default function StoreNavbar() {
               </button>
             </form>
           ) : (
-            <button
-              onClick={() => setSearchOpen(true)}
-              aria-label="Open search"
-              className="p-2 rounded-full hover:bg-slate-green/5 transition-colors"
-            >
-              <Search size={20} className="text-slate-green" />
-            </button>
+            <div className="flex items-center gap-8">
+              <Link href="/catalog" className="text-sm font-medium text-muted hover:text-slate-green transition-colors">
+                All Products
+              </Link>
+              <Link href="/catalog?category=solar-panels" className="text-sm font-medium text-muted hover:text-slate-green transition-colors">
+                Solar Panels
+              </Link>
+              <Link href="/catalog?category=inverters" className="text-sm font-medium text-muted hover:text-slate-green transition-colors">
+                Inverters
+              </Link>
+              <Link href="/catalog?category=batteries" className="text-sm font-medium text-muted hover:text-slate-green transition-colors">
+                Batteries
+              </Link>
+              <button
+                onClick={() => setSearchOpen(true)}
+                aria-label="Open search"
+                className="p-2 rounded-full hover:bg-slate-green/5 transition-colors"
+              >
+                <Search size={20} className="text-slate-green" />
+              </button>
+            </div>
           )}
         </div>
 
