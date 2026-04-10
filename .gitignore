@@ -19,7 +19,7 @@ dist-ssr
 .env.preprod
 .env.dev
 
-.skills-lock.json
+skills-lock.json
 .agents/*
 .claude/*
 .junie/*
