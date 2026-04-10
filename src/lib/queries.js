@@ -174,9 +174,51 @@ export async function adminGetOrderById(id) {
 }
 
 // Admin: all orders
-export async function adminGetOrders({ status, page = 1 } = {}) {
+export async function adminGetOrders({ status, page = 1, search } = {}) {
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
+
+  if (search) {
+    const term = search.trim().replace(/^#/, '').toLowerCase()
+    if (!term) {
+      // fall through to normal query below
+    } else if (term.includes('@')) {
+      // Email search: find matching user IDs from profiles, then fetch their orders
+      const { data: matchedProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('email', `%${term}%`)
+        .limit(50)
+      const userIds = (matchedProfiles || []).map((p) => p.id)
+      if (!userIds.length) return { data: [], error: null, count: 0 }
+      let q = supabase
+        .from('orders')
+        .select('*', { count: 'exact' })
+        .in('user_id', userIds)
+        .order('created_at', { ascending: false })
+      if (status) q = q.eq('status', status)
+      q = q.range(from, to)
+      return await q
+    } else {
+      // Search by order ID prefix and phone number in parallel, then deduplicate
+      const base = () => {
+        let q = supabase.from('orders').select('*').order('created_at', { ascending: false })
+        if (status) q = q.eq('status', status)
+        return q
+      }
+      const [idRes, phoneRes] = await Promise.all([
+        base().filter('id::text', 'ilike', `${term}%`).limit(PAGE_SIZE),
+        base().filter('delivery_address->>phone', 'ilike', `%${term}%`).limit(PAGE_SIZE),
+      ])
+      const seen = new Set()
+      const data = []
+      for (const row of [...(idRes.data || []), ...(phoneRes.data || [])]) {
+        if (!seen.has(row.id)) { seen.add(row.id); data.push(row) }
+      }
+      return { data, error: idRes.error || phoneRes.error || null, count: data.length }
+    }
+  }
+
   let query = supabase
     .from('orders')
     .select('*', { count: 'exact' })

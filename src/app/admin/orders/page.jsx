@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Alert } from '@heroui/react/alert'
 import { Button } from '@heroui/react/button'
 import { Card } from '@heroui/react/card'
 import { Table } from '@heroui/react/table'
-import { ShoppingCart, ChevronRight } from 'lucide-react'
+import { ShoppingCart, ChevronRight, Search, X } from 'lucide-react'
 import { adminGetOrders } from '../../../lib/queries'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import StatusBadge from '../../../components/ui/StatusBadge'
@@ -31,11 +31,32 @@ export default function AdminOrdersPage() {
   const [fetchError, setFetchError] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debounceRef = useRef(null)
 
-  const load = useCallback(async (status, p) => {
+  // Debounce search input
+  function handleSearchChange(e) {
+    const val = e.target.value
+    setSearch(val)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400)
+  }
+
+  function clearSearch() {
+    setSearch('')
+    setDebouncedSearch('')
+    clearTimeout(debounceRef.current)
+  }
+
+  const load = useCallback(async (status, p, searchTerm) => {
     setLoading(true)
     setFetchError('')
-    const { data, error, count } = await adminGetOrders({ status: status || undefined, page: p })
+    const { data, error, count } = await adminGetOrders({
+      status: status || undefined,
+      page: p,
+      search: searchTerm || undefined,
+    })
     if (error) setFetchError('Could not load orders. Please try again.')
     setOrders(data || [])
     setTotal(count || 0)
@@ -44,16 +65,39 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setPage(1)
-    load(statusFilter, 1)
-  }, [statusFilter, load])
+    load(statusFilter, 1, debouncedSearch)
+  }, [statusFilter, debouncedSearch, load])
 
   useEffect(() => {
-    load(statusFilter, page)
+    load(statusFilter, page, debouncedSearch)
   }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isSearching = debouncedSearch.trim().length > 0
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-green mb-6">Orders</h1>
+
+      {/* Search bar */}
+      <div className="relative mb-4 max-w-md">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Search by order ID, phone or email…"
+          className="w-full pl-10 pr-9 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+        />
+        {search && (
+          <button
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-slate-green transition-colors"
+            aria-label="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
       {/* Status filter tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -161,7 +205,9 @@ export default function AdminOrdersPage() {
             </Table>
           </Card>
 
-          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          {!isSearching && (
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          )}
         </>
       )}
     </div>
