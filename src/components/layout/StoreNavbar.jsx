@@ -42,7 +42,7 @@ export default function StoreNavbar() {
         </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className={`hidden items-center gap-8 ${searchOpen ? '' : 'md:flex'}`}>
           <Link
             href="/catalog"
             className="text-sm font-medium text-muted hover:text-slate-green transition-colors"
@@ -80,11 +80,8 @@ export default function StoreNavbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
                 placeholder="Search products…"
-                className="w-52 px-4 py-2 text-sm border border-slate-green/30 rounded-full focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors bg-white"
+                className="w-80 px-4 py-2 text-sm border border-slate-green/30 rounded-full focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors bg-white"
               />
-              <button type="submit" aria-label="Search" className="p-2 rounded-full hover:bg-slate-green/5 transition-colors">
-                <Search size={18} className="text-slate-green" />
-              </button>
               <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search" className="p-2 rounded-full hover:bg-slate-green/5 transition-colors">
                 <X size={18} className="text-slate-green" />
               </button>
