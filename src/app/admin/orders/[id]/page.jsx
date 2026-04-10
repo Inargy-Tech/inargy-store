@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
+import { Card } from '@heroui/react/card'
+import Image from 'next/image'
 import { ChevronLeft, Package, MapPin, CreditCard, CheckCircle } from 'lucide-react'
-import { adminGetOrderById, updateOrderStatus } from '../../../../lib/queries'
+import { getOrderById, updateOrderStatus } from '../../../../lib/queries'
 import StatusBadge from '../../../../components/ui/StatusBadge'
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner'
 import { formatNaira, formatDate } from '../../../../config'
@@ -21,19 +22,24 @@ export default function AdminOrderDetailPage() {
 
   useEffect(() => {
     async function load() {
-      const { data, error } = await adminGetOrderById(id)
+      const { data, error } = await getOrderById(id)
       setLoading(false)
       if (!error && data) setOrder(data)
     }
     load()
   }, [id])
 
+  const [statusError, setStatusError] = useState('')
+
   async function handleStatusChange(e) {
     const newStatus = e.target.value
     setUpdating(true)
+    setStatusError('')
     const { data, error } = await updateOrderStatus(id, newStatus)
     setUpdating(false)
-    if (!error && data) {
+    if (error) {
+      setStatusError('Could not update status. Please try again.')
+    } else if (data) {
       setOrder(data)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -84,7 +90,6 @@ export default function AdminOrderDetailPage() {
             </span>
           )}
           <select
-            id="order-status"
             value={order.status}
             onChange={handleStatusChange}
             disabled={updating}
@@ -98,20 +103,27 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
+      {statusError && (
+        <div className="mb-6 p-3 bg-danger/10 text-danger text-sm rounded-xl">
+          {statusError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Delivery */}
-        <div className="bg-white rounded-2xl border border-border p-5">
+        <Card className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <MapPin size={16} className="text-slate-green" />
             <h2 className="text-sm font-semibold text-slate-green">Delivery Address</h2>
           </div>
           <p className="text-sm font-medium text-slate-green">{addr.full_name || '—'}</p>
           <p className="text-sm text-muted">{addr.phone || '—'}</p>
-          <p className="text-sm text-muted mt-1 whitespace-pre-line">{addr.address}</p>
-        </div>
+          <p className="text-sm text-muted mt-1">{addr.address}</p>
+          <p className="text-sm text-muted">{[addr.city, addr.state].filter(Boolean).join(', ')}</p>
+        </Card>
 
         {/* Payment */}
-        <div className="bg-white rounded-2xl border border-border p-5">
+        <Card className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <CreditCard size={16} className="text-slate-green" />
             <h2 className="text-sm font-semibold text-slate-green">Payment</h2>
@@ -122,20 +134,20 @@ export default function AdminOrderDetailPage() {
           {order.notes && (
             <p className="text-sm text-muted mt-2 italic">"{order.notes}"</p>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Items */}
-      <div className="bg-white rounded-2xl border border-border p-5">
+      <Card className="p-5">
         <h2 className="text-sm font-semibold text-slate-green mb-4 flex items-center gap-2">
           <Package size={16} /> Items ({order.order_items?.length || 0})
         </h2>
         <ul className="divide-y divide-border-light">
           {(order.order_items || []).map((item) => (
             <li key={item.id} className="py-4 flex gap-4 first:pt-0 last:pb-0">
-              <div className="w-16 h-16 bg-surface rounded-xl overflow-hidden shrink-0 relative">
+              <div className="w-16 h-16 bg-surface rounded-xl overflow-hidden shrink-0">
                 {item.image_url ? (
-                  <Image src={item.image_url} alt={item.product_name} fill sizes="64px" className="object-cover" />
+                  <Image src={item.image_url} alt={item.product_name} width={64} height={64} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package size={20} className="text-muted" />
@@ -156,7 +168,7 @@ export default function AdminOrderDetailPage() {
           <span className="font-semibold text-slate-green">Total</span>
           <span className="text-lg font-bold text-slate-green">{formatNaira(order.total_kobo)}</span>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

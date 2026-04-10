@@ -2,10 +2,23 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
-import { Package, ChevronLeft } from 'lucide-react'
+import { Package, ChevronLeft, Star } from 'lucide-react'
 import { createServerSupabase } from '../../../../lib/supabase-server'
 import NairaPrice from '../../../../components/ui/NairaPrice'
 import AddToCartSection from './AddToCartSection'
+
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const supabase = createServerSupabase()
+  const { data } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(100)
+  return (data || []).map(({ slug }) => ({ slug }))
+}
 
 async function getProduct(slug) {
   const supabase = await createServerSupabase()
@@ -111,6 +124,12 @@ export default async function ProductDetailPage({ params }) {
             <div className="w-full h-full flex items-center justify-center text-muted" role="img" aria-label={product.name}>
               <Package size={80} strokeWidth={1} />
             </div>
+          )}
+          {product.featured && (
+            <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-volt rounded-full shadow-sm text-slate-green text-xs font-bold">
+              <Star size={12} className="fill-slate-green text-slate-green shrink-0" />
+              Featured
+            </span>
           )}
         </div>
 

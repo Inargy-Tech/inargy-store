@@ -1,17 +1,19 @@
 'use client'
 
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import { Suspense } from 'react'
 import { BrandMark } from '../../assets/logo'
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
-import { getProducts } from '../../lib/queries'
+import { getProducts, getFeaturedProducts } from '../../lib/queries'
+import { Star } from 'lucide-react'
 import ProductGrid from '../../components/storefront/ProductGrid'
 import Pagination from '../../components/ui/Pagination'
 
 const CATEGORIES = [
   { value: '', label: 'All Products' },
+  { value: 'featured', label: 'Featured', icon: true },
   { value: 'solar-panels', label: 'Solar Panels' },
   { value: 'inverters', label: 'Inverters' },
   { value: 'batteries', label: 'Batteries' },
@@ -53,7 +55,15 @@ function CatalogInner({ initialProducts = [], initialTotal = 0 }) {
   const fetchProducts = useCallback(async () => {
     setLoading(true)
     try {
-      const { data, count } = await getProducts({ category, search, sort: sortField, order: sortOrder, page })
+      const isFeatured = category === 'featured'
+      const { data, count } = await getProducts({
+        category: isFeatured ? '' : category,
+        search,
+        sort: sortField,
+        order: sortOrder,
+        page,
+        featured: isFeatured || undefined,
+      })
       setProducts(data || [])
       setTotal(count || 0)
     } catch (err) {
@@ -149,13 +159,16 @@ function CatalogInner({ initialProducts = [], initialTotal = 0 }) {
                   key={cat.value}
                   onClick={() => updateURL('category', cat.value)}
                   aria-pressed={category === cat.value}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
                     category === cat.value
                       ? 'bg-slate-green text-white'
                       : 'text-muted hover:bg-surface'
                   }`}
                 >
                   {cat.label}
+                  {cat.icon && (
+                    <Star size={13} className={`shrink-0 ${category === cat.value ? 'fill-white text-white' : 'fill-volt text-volt'}`} />
+                  )}
                 </button>
               ))}
             </nav>
@@ -188,7 +201,7 @@ export default function CatalogContent({ initialProducts, initialTotal }) {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <BrandMark size={48} className="text-slate-green animate-breathe" />
+        <BrandMark size={48} className="text-volt animate-breathe" />
       </div>
     }>
       <CatalogInner initialProducts={initialProducts} initialTotal={initialTotal} />

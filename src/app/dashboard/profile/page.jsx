@@ -1,32 +1,34 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@heroui/react'
-import { User, Phone, MapPin, Lock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Alert } from '@heroui/react/alert'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { Input } from '@heroui/react/input'
+import { TextArea } from '@heroui/react/textarea'
+import { User, Phone, MapPin, Lock } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { updateProfile } from '../../../lib/queries'
 import { supabase } from '../../../lib/supabase'
 
 function Section({ title, children }) {
   return (
-    <div className="bg-white rounded-2xl border border-border p-6">
+    <Card className="p-6">
       <h2 className="text-base font-semibold text-slate-green mb-5">{title}</h2>
       {children}
-    </div>
+    </Card>
   )
 }
 
-function Alert({ type, message }) {
+function StatusAlert({ type, message }) {
   if (!message) return null
-  const styles = type === 'success'
-    ? 'bg-success/5 border-success/20 text-success'
-    : 'bg-danger/5 border-danger/20 text-danger'
-  const Icon = type === 'success' ? CheckCircle : AlertCircle
   return (
-    <div className={`flex items-center gap-2 p-3 mb-5 rounded-xl border text-sm ${styles}`}>
-      <Icon size={16} className="shrink-0" />
-      {message}
-    </div>
+    <Alert status={type === 'success' ? 'success' : 'danger'} className="mb-5">
+      <Alert.Indicator />
+      <Alert.Content>
+        <Alert.Description>{message}</Alert.Description>
+      </Alert.Content>
+    </Alert>
   )
 }
 
@@ -62,7 +64,7 @@ export default function ProfilePage() {
     const { error } = await updateProfile(user.id, profileForm)
     setProfileLoading(false)
     if (error) {
-      setProfileStatus({ type: 'error', msg: error.message || 'Could not update profile.' })
+      setProfileStatus({ type: 'error', msg: 'Could not update profile. Please try again.' })
     } else {
       await refreshProfile()
       setProfileStatus({ type: 'success', msg: 'Profile updated successfully.' })
@@ -84,7 +86,7 @@ export default function ProfilePage() {
     const { error } = await supabase.auth.updateUser({ password: pwForm.password })
     setPwLoading(false)
     if (error) {
-      setPwStatus({ type: 'error', msg: error.message || 'Could not update password.' })
+      setPwStatus({ type: 'error', msg: 'Could not update password. Please try again.' })
     } else {
       setPwStatus({ type: 'success', msg: 'Password updated successfully.' })
       setPwForm({ password: '', confirm: '' })
@@ -100,17 +102,14 @@ export default function ProfilePage() {
 
       {/* Profile details */}
       <Section title="Personal Details">
-        <Alert type={profileStatus.type} message={profileStatus.msg} />
+        <StatusAlert type={profileStatus.type} message={profileStatus.msg} />
         <form onSubmit={handleProfileSave} className="space-y-5">
           <div>
-            <label htmlFor="profile-fullName" className="block text-sm font-medium text-slate-green mb-1.5">Full name</label>
+            <label className="block text-sm font-medium text-slate-green mb-1.5">Full name</label>
             <div className="relative">
               <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input
-                id="profile-fullName"
-                name="fullName"
                 type="text"
-                autoComplete="name"
                 value={profileForm.full_name}
                 onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
                 placeholder="Your full name"
@@ -120,35 +119,31 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label htmlFor="profile-phone" className="block text-sm font-medium text-slate-green mb-1.5">Phone number</label>
+            <label className="block text-sm font-medium text-slate-green mb-1.5">Phone number</label>
             <div className="relative">
               <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                id="profile-phone"
-                name="phone"
+              <Input
                 type="tel"
-                autoComplete="tel"
+                variant="bordered"
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                 placeholder="+234 800 000 0000"
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                className="w-full pl-10 pr-4"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="profile-address" className="block text-sm font-medium text-slate-green mb-1.5">Address</label>
+            <label className="block text-sm font-medium text-slate-green mb-1.5">Address</label>
             <div className="relative">
               <MapPin size={16} className="absolute left-3.5 top-3.5 text-muted" />
-              <textarea
-                id="profile-address"
-                name="address"
-                autoComplete="street-address"
+              <TextArea
+                variant="bordered"
                 value={profileForm.address}
                 onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
                 rows={3}
                 placeholder="Your delivery address"
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors resize-none"
+                className="w-full pl-10 pr-4 resize-none"
               />
             </div>
           </div>
@@ -157,7 +152,7 @@ export default function ProfilePage() {
             type="submit"
             isDisabled={profileLoading}
             isLoading={profileLoading}
-            className="px-6 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60"
+            className="px-6 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-slate-dark transition-colors disabled:opacity-60"
           >
             Save Changes
           </Button>
@@ -166,39 +161,37 @@ export default function ProfilePage() {
 
       {/* Change password */}
       <Section title="Change Password">
-        <Alert type={pwStatus.type} message={pwStatus.msg} />
+        <StatusAlert type={pwStatus.type} message={pwStatus.msg} />
         <form onSubmit={handlePasswordChange} className="space-y-5">
           <div>
-            <label htmlFor="profile-newPassword" className="block text-sm font-medium text-slate-green mb-1.5">New password</label>
+            <label className="block text-sm font-medium text-slate-green mb-1.5">New password</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                id="profile-newPassword"
+              <Input
                 type="password"
+                variant="bordered"
                 required
                 minLength={8}
-                autoComplete="new-password"
                 value={pwForm.password}
                 onChange={(e) => setPwForm({ ...pwForm, password: e.target.value })}
                 placeholder="Min. 8 characters"
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                className="w-full pl-10 pr-4"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="profile-confirmPassword" className="block text-sm font-medium text-slate-green mb-1.5">Confirm new password</label>
+            <label className="block text-sm font-medium text-slate-green mb-1.5">Confirm new password</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                id="profile-confirmPassword"
+              <Input
                 type="password"
+                variant="bordered"
                 required
-                autoComplete="new-password"
                 value={pwForm.confirm}
                 onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
                 placeholder="Repeat password"
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                className="w-full pl-10 pr-4"
               />
             </div>
           </div>
@@ -207,7 +200,7 @@ export default function ProfilePage() {
             type="submit"
             isDisabled={pwLoading}
             isLoading={pwLoading}
-            className="px-6 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60"
+            className="px-6 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-slate-dark transition-colors disabled:opacity-60"
           >
             Update Password
           </Button>
@@ -221,15 +214,9 @@ export default function ProfilePage() {
             <p className="text-sm font-medium text-slate-green">Email address</p>
             <p className="text-sm text-muted">{user.email}</p>
           </div>
-          {user.email_confirmed_at ? (
-            <span className="text-xs bg-success/10 text-success px-2.5 py-1 rounded-full font-medium">
-              Verified
-            </span>
-          ) : (
-            <span className="text-xs bg-warning/10 text-warning px-2.5 py-1 rounded-full font-medium">
-              Unverified
-            </span>
-          )}
+          <span className="text-xs bg-success/10 text-success px-2.5 py-1 rounded-full font-medium">
+            Verified
+          </span>
         </div>
       </Section>
     </div>

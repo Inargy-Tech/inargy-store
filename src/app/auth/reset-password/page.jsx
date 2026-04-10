@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Button } from '@heroui/react'
-import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Alert } from '@heroui/react/alert'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { Input } from '@heroui/react/input'
+import { Mail, CheckCircle, ArrowLeft } from 'lucide-react'
 import { Logo } from '../../../assets/logo'
 import { useAuth } from '../../../contexts/AuthContext'
 
@@ -31,10 +34,10 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex justify-center mb-8 text-slate-green">
-          <Logo height={32} />
+          <Logo height={40} />
         </Link>
 
-        <div className="bg-white rounded-2xl border border-border p-8">
+        <Card className="p-8">
           {sent ? (
             <div className="text-center">
               <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -65,30 +68,29 @@ export default function ResetPasswordPage() {
               </p>
 
               {error && (
-                <div id="reset-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
-                  <AlertCircle size={16} className="shrink-0" />
-                  {error}
-                </div>
+                <Alert status="danger" className="mb-6">
+                  <Alert.Indicator />
+                  <Alert.Content>
+                    <Alert.Description>{error}</Alert.Description>
+                  </Alert.Content>
+                </Alert>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'reset-error' : undefined}>
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="reset-email" className="block text-sm font-medium text-slate-green mb-1.5">
+                  <label className="block text-sm font-medium text-slate-green mb-1.5">
                     Email address
                   </label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                    <input
-                      id="reset-email"
-                      name="email"
+                    <Input
                       type="email"
                       required
-                      autoComplete="email"
+                      variant="bordered"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      aria-invalid={error ? 'true' : undefined}
-                      className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                      className="w-full pl-10"
                     />
                   </div>
                 </div>
@@ -96,14 +98,14 @@ export default function ResetPasswordPage() {
                   type="submit"
                   isDisabled={loading}
                   isLoading={loading}
-                  className="w-full py-3 bg-slate-green text-white font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60"
+                  className="w-full py-3 bg-slate-green text-white font-semibold rounded-full hover:bg-slate-dark transition-colors disabled:opacity-60"
                 >
                   Send Reset Link
                 </Button>
               </form>
             </>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   )

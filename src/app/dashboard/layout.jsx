@@ -1,13 +1,9 @@
-import DashboardLayoutShell from './DashboardLayoutShell'
+import DashboardShell from '../../components/layout/DashboardShell'
 
 export const metadata = {
-  title: 'Dashboard',
+  robots: { index: false, follow: false },
 }
 
 export default function DashboardLayout({ children }) {
-  return (
-    <DashboardLayoutShell>
-      {children}
-    </DashboardLayoutShell>
-  )
+  return <DashboardShell>{children}</DashboardShell>
 }

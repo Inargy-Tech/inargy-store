@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, AlertCircle, CheckCircle, Truck, CreditCard, Smartphone, Building2 } from 'lucide-react'

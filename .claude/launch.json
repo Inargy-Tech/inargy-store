@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "inargy-store",
-      "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["/Users/oao/Documents/GitHub/claude-test/inargy-store/.claude/start-dev.sh"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 3000
     }
   ]

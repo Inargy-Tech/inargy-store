@@ -10,6 +10,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import EmptyState from '../../../components/ui/EmptyState'
 import { formatNaira, formatDate } from '../../../config'
 import { CONTACT } from '../../../config'
+import { Card } from '@heroui/react/card'
 
 export default function InstallmentsPage() {
   const { user } = useAuth()
@@ -18,7 +19,8 @@ export default function InstallmentsPage() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await getInstallments(user.id)
+      const { data, error } = await getInstallments(user.id)
+      if (error) console.error('Failed to load installments:', error.message)
       setPlans(data || [])
       setLoading(false)
     }
@@ -46,7 +48,7 @@ export default function InstallmentsPage() {
           action={
             <Link
               href="/catalog"
-              className="inline-flex items-center px-5 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
+              className="inline-flex items-center px-5 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-slate-dark transition-colors"
             >
               Shop Now
             </Link>
@@ -59,7 +61,7 @@ export default function InstallmentsPage() {
             const paidPct = plan.total_kobo ? Math.round(((plan.paid_kobo || 0) / plan.total_kobo) * 100) : 0
 
             return (
-              <div key={plan.id} className="bg-white rounded-2xl border border-border p-5">
+              <Card key={plan.id} className="p-5">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <p className="text-sm font-semibold text-slate-green">
@@ -102,12 +104,12 @@ export default function InstallmentsPage() {
                     href={CONTACT.whatsapp}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-slate-green text-white text-xs font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
+                    className="px-4 py-2 bg-slate-green text-white text-xs font-semibold rounded-full hover:bg-slate-dark transition-colors"
                   >
                     Make Payment
                   </a>
                 </div>
-              </div>
+              </Card>
             )
           })}
         </div>

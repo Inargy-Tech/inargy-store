@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import { ChevronLeft, AlertCircle, CheckCircle, UploadCloud } from 'lucide-react'
 import { adminGetProductById, updateProduct, uploadProductImage } from '../../../../lib/queries'
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner'
@@ -12,7 +12,7 @@ import LoadingSpinner from '../../../../components/ui/LoadingSpinner'
 const CATEGORIES = ['solar-panels', 'inverters', 'batteries', 'controllers', 'accessories']
 
 const EMPTY = {
-  name: '', slug: '', category: '', description: '', image_url: '', price_kobo: '', stock: '', is_active: true,
+  name: '', slug: '', category: '', description: '', image_url: '', price_kobo: '', stock: '', is_active: true, featured: false,
 }
 
 function slugify(str) {
@@ -38,7 +38,7 @@ export default function EditProductPage() {
         name: data.name || '', slug: data.slug || '', category: data.category || '',
         description: data.description || '', image_url: data.image_url || '',
         price_kobo: data.price_kobo != null ? String(data.price_kobo) : '',
-        stock: data.stock != null ? String(data.stock) : '', is_active: data.is_active ?? true,
+        stock: data.stock != null ? String(data.stock) : '', is_active: data.is_active ?? true, featured: data.featured ?? false,
       })
     }
     load()
@@ -66,7 +66,7 @@ export default function EditProductPage() {
       name: form.name.trim(), slug: form.slug.trim(), category: form.category || null,
       description: form.description.trim() || null, image_url: form.image_url.trim() || null,
       price_kobo: parseInt(form.price_kobo, 10), stock: form.stock !== '' ? parseInt(form.stock, 10) : 0,
-      is_active: form.is_active,
+      is_active: form.is_active, featured: form.featured,
     }
     setSaving(true)
     const { error } = await updateProduct(id, payload)
@@ -125,56 +125,60 @@ export default function EditProductPage() {
         </div>
         <div className="bg-white rounded-2xl border border-border p-6 space-y-5">
           <h2 className="text-sm font-semibold text-slate-green mb-1">Media</h2>
-          <div className="flex gap-4 items-start">
-            <div className="flex-1">
-              <label htmlFor="edit-imageUpload" className="block text-sm font-medium text-slate-green mb-1.5">Product image</label>
-              <label htmlFor="edit-imageUpload" className={`flex items-center gap-3 px-4 py-2.5 border border-dashed rounded-xl text-sm cursor-pointer transition-colors ${uploading ? 'border-border text-muted' : 'border-slate-green/40 hover:border-slate-green text-muted hover:text-slate-green'}`}>
-                <UploadCloud size={18} className="shrink-0" />
-                {uploading ? 'Uploading…' : 'Choose file to upload'}
-              </label>
-              <input
-                id="edit-imageUpload"
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                disabled={uploading}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  setUploading(true)
-                  setError(''); setSuccess('')
-                  const { url, error: uploadError } = await uploadProductImage(file)
-                  setUploading(false)
-                  if (uploadError) setError('Image upload failed: ' + (uploadError.message || 'Unknown error'))
-                  else setForm((f) => ({ ...f, image_url: url }))
-                  e.target.value = ''
-                }}
-              />
-              {form.image_url && (
-                <p className="text-xs text-muted mt-1.5 truncate" title={form.image_url}>{form.image_url}</p>
-              )}
-            </div>
+          <div className="space-y-3">
+            <label htmlFor="edit-imageUpload" className="block text-sm font-medium text-slate-green mb-1.5">Product image</label>
+            <label htmlFor="edit-imageUpload" className={`flex items-center gap-3 px-4 py-2.5 border border-dashed rounded-xl text-sm cursor-pointer transition-colors ${uploading ? 'border-border text-muted' : 'border-slate-green/40 hover:border-slate-green text-muted hover:text-slate-green'}`}>
+              <UploadCloud size={18} className="shrink-0" />
+              {uploading ? 'Uploading…' : 'Choose file to upload'}
+            </label>
+            <input
+              id="edit-imageUpload"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={uploading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setUploading(true)
+                setError(''); setSuccess('')
+                const { url, error: uploadError } = await uploadProductImage(file)
+                setUploading(false)
+                if (uploadError) setError('Image upload failed: ' + (uploadError.message || 'Unknown error'))
+                else setForm((f) => ({ ...f, image_url: url }))
+                e.target.value = ''
+              }}
+            />
             {form.image_url && (
-              <div className="w-24 h-24 rounded-xl overflow-hidden border border-border relative shrink-0">
-                <Image src={form.image_url} alt="Preview" fill sizes="96px" className="object-cover" />
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border bg-surface">
+                <Image src={form.image_url} alt="Preview" fill sizes="100vw" className="object-contain" />
               </div>
             )}
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-border p-6">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input id="edit-active" type="checkbox" checked={form.is_active} onChange={update('is_active')} className="w-4 h-4 accent-slate-green" />
-            <div>
-              <p className="text-sm font-medium text-slate-green">Published</p>
-              <p className="text-xs text-muted">Visible to customers in the store</p>
-            </div>
-          </label>
+          <div className="flex flex-col sm:flex-row gap-6">
+            <label className="flex items-center gap-3 cursor-pointer flex-1">
+              <input id="edit-active" type="checkbox" checked={form.is_active} onChange={update('is_active')} className="w-4 h-4 accent-slate-green" />
+              <div>
+                <p className="text-sm font-medium text-slate-green">Published</p>
+                <p className="text-xs text-muted">Visible to customers in the store</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer flex-1">
+              <input id="edit-featured" type="checkbox" checked={form.featured} onChange={update('featured')} className="w-4 h-4 accent-volt" />
+              <div>
+                <p className="text-sm font-medium text-slate-green">Featured</p>
+                <p className="text-xs text-muted">Shown in Featured Products on the homepage</p>
+              </div>
+            </label>
+          </div>
         </div>
         <div className="flex gap-3">
           <Button type="submit" isLoading={saving} className="px-8 py-3 bg-slate-green text-white font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60">
             Save Changes
           </Button>
-          <Link href="/admin/products" className="px-8 py-3 border border-border text-muted font-medium rounded-full hover:bg-surface transition-colors">Cancel</Link>
+          <Link href="/admin/products" className="inline-flex items-center justify-center px-8 py-3 border border-border text-slate-green font-semibold rounded-full hover:bg-surface transition-colors">Cancel</Link>
         </div>
       </form>
     </div>

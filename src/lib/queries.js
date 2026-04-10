@@ -6,7 +6,19 @@ const PAGE_SIZE = 20
 
 const ALLOWED_SORT_COLUMNS = new Set(['created_at', 'price_kobo', 'name', 'stock'])
 
-export async function getProducts({ category, search, sort = 'created_at', order = 'desc', page = 1 } = {}, customClient = null) {
+export async function getFeaturedProducts(customClient = null) {
+  const client = customClient || supabase
+  const { data, error } = await client
+    .from('products')
+    .select('id, slug, name, image_url, category, price_kobo, stock, is_active, featured')
+    .eq('is_active', true)
+    .eq('featured', true)
+    .order('created_at', { ascending: false })
+    .limit(8)
+  return { data, error }
+}
+
+export async function getProducts({ category, search, sort = 'created_at', order = 'desc', page = 1, featured } = {}, customClient = null) {
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
@@ -15,10 +27,11 @@ export async function getProducts({ category, search, sort = 'created_at', order
 
   let query = client
     .from('products')
-    .select('id, slug, name, image_url, category, price_kobo, stock, is_active, created_at', { count: 'exact' })
+    .select('id, slug, name, image_url, category, price_kobo, stock, is_active, featured, created_at', { count: 'exact' })
     .eq('is_active', true)
 
-  if (category) query = query.eq('category', category)
+  if (featured) query = query.eq('featured', true)
+  else if (category) query = query.eq('category', category)
   if (search) query = query.ilike('name', `%${search}%`)
   query = query.order(safeSort, { ascending: order === 'asc' }).range(from, to)
 
@@ -56,28 +69,44 @@ export async function adminGetProductById(id) {
   return { data, error }
 }
 
+async function getAdminAuthHeader() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token ? `Bearer ${session.access_token}` : ''
+}
+
 export async function createProduct(productData) {
-  const { data, error } = await supabase
-    .from('products')
-    .insert([productData])
-    .select()
-    .single()
-  return { data, error }
+  const authorization = await getAdminAuthHeader()
+  const res = await fetch('/api/admin/products', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authorization },
+    body: JSON.stringify(productData),
+  })
+  const result = await res.json()
+  if (!res.ok) return { data: null, error: { message: result.error || 'Request failed' } }
+  return { data: result.data, error: null }
 }
 
 export async function updateProduct(id, productData) {
-  const { data, error } = await supabase
-    .from('products')
-    .update(productData)
-    .eq('id', id)
-    .select()
-    .single()
-  return { data, error }
+  const authorization = await getAdminAuthHeader()
+  const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: authorization },
+    body: JSON.stringify(productData),
+  })
+  const result = await res.json()
+  if (!res.ok) return { data: null, error: { message: result.error || 'Request failed' } }
+  return { data: result.data, error: null }
 }
 
 export async function deleteProduct(id) {
-  const { error } = await supabase.from('products').delete().eq('id', id)
-  return { error }
+  const authorization = await getAdminAuthHeader()
+  const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: authorization },
+  })
+  const result = await res.json()
+  if (!res.ok) return { error: { message: result.error || 'Request failed' } }
+  return { error: null }
 }
 
 export async function uploadProductImage(file) {
@@ -284,15 +313,17 @@ export async function updateProfile(userId, fields) {
   return { data, error }
 }
 
-export async function adminGetCustomers({ page = 1 } = {}) {
+export async function adminGetCustomers({ search, page = 1 } = {}) {
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('profiles')
     .select('*', { count: 'exact' })
     .neq('role', 'admin')
     .order('created_at', { ascending: false })
-    .range(from, to)
+  if (search) query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%`)
+  query = query.range(from, to)
+  const { data, error, count } = await query
   return { data, error, count }
 }
 

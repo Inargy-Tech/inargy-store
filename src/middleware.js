@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -35,7 +34,7 @@ function buildCsp(nonce) {
     ].filter(Boolean).join(' '),
     "style-src 'self' 'unsafe-inline' https://paystack.co https://paystack.com https://*.paystack.co https://*.paystack.com https://fonts.googleapis.com",
     "style-src-elem 'self' 'unsafe-inline' https://paystack.co https://paystack.com https://*.paystack.co https://*.paystack.com https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://*.paystack.co https://*.paystack.com https://*.vercel.app https://*.inargy.co https://*.inargy.tech",
+    "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://*.paystack.co https://*.paystack.com https://*.vercel.app https://*.inargy.co https://*.inargy.tech https://minisim.com.ng",
     "font-src 'self' data: https://fonts.gstatic.com https://*.paystack.co https://*.paystack.com",
     [
       "connect-src 'self'",
@@ -98,8 +97,9 @@ export async function middleware(request) {
 
   // Skip the expensive Edge database lookup on public storefront routes
   const isPublicStorefront = pathname === '/' || pathname.startsWith('/catalog') || pathname.startsWith('/product/')
-  
+
   if (!isPublicStorefront) {
+    const { createServerClient } = await import('@supabase/ssr')
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

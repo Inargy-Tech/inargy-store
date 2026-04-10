@@ -12,6 +12,7 @@ function loadScript() {
     const script = document.createElement('script')
     script.src = PAYSTACK_INLINE_URL
     script.async = true
+    script.crossOrigin = 'anonymous'
     script.onload = resolve
     script.onerror = () => reject(new Error('Failed to load Paystack'))
     document.head.appendChild(script)

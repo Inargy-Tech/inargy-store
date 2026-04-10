@@ -1,54 +1,63 @@
 import { Inter } from 'next/font/google'
-import { headers } from 'next/headers'
 import './globals.css'
 import Providers from './Providers'
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter',
   display: 'swap',
+  variable: '--font-inter',
 })
 
 export const metadata = {
   metadataBase: new URL('https://store.inargy.tech'),
   title: {
-    default: 'Inargy Store — Affordable Solar Energy for Nigeria',
+    default: 'Inargy Store — Solar Energy Systems for Nigeria',
     template: '%s — Inargy Store',
   },
-  description:
-    'Shop affordable solar panels, inverters, batteries and charge controllers for Nigerian homes and businesses. Pay with card, bank transfer, or installments.',
-  keywords: ['solar panels Nigeria', 'inverter', 'battery', 'solar energy', 'inargy', 'renewable energy'],
+  description: 'Affordable solar energy systems for Nigerian homes and businesses. Solar panels, inverters, batteries and more with flexible payment plans.',
   openGraph: {
     type: 'website',
-    siteName: 'Inargy Store',
-    title: 'Inargy Store — Affordable Solar Energy for Nigeria',
-    description:
-      'Shop affordable solar panels, inverters, batteries and charge controllers for Nigerian homes and businesses.',
-    url: 'https://store.inargy.tech',
     locale: 'en_NG',
+    siteName: 'Inargy Store',
+    title: 'Inargy Store — Solar Energy Systems for Nigeria',
+    description: 'Affordable solar energy systems for Nigerian homes and businesses. Solar panels, inverters, batteries and more with flexible payment plans.',
+    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'Inargy Store — Solar Energy Systems for Nigeria' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Inargy Store — Affordable Solar Energy for Nigeria',
-    description:
-      'Shop affordable solar panels, inverters, batteries and charge controllers for Nigerian homes and businesses.',
+    title: 'Inargy Store — Solar Energy Systems for Nigeria',
+    description: 'Affordable solar energy systems for Nigerian homes and businesses.',
+    images: ['/og-default.png'],
   },
   robots: {
     index: true,
     follow: true,
   },
-  alternates: {
-    canonical: 'https://store.inargy.tech',
-  },
 }
 
-export default async function RootLayout({ children }) {
-  const nonce = (await headers()).get('x-nonce') ?? undefined
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Inargy Store',
+  url: 'https://store.inargy.tech',
+  description: 'Affordable solar energy systems for Nigerian homes and businesses.',
+}
+
+export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body>
-        <Providers nonce={nonce}>{children}</Providers>
+      <body className={inter.className}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

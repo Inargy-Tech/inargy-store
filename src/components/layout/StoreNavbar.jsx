@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, User, Menu, X, LogOut, Package, LayoutDashboard, Search } from 'lucide-react'

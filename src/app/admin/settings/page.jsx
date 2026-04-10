@@ -1,17 +1,18 @@
 'use client'
 
+import { Card } from '@heroui/react/card'
 import { CheckCircle, AlertCircle, Settings, Store, MessageCircle } from 'lucide-react'
 import { SITE, CONTACT } from '../../../config'
 
 function Section({ icon: Icon, title, children }) {
   return (
-    <div className="bg-white rounded-2xl border border-border p-6">
+    <Card className="p-6">
       <div className="flex items-center gap-2 mb-5">
         <Icon size={18} className="text-slate-green" />
         <h2 className="text-base font-semibold text-slate-green">{title}</h2>
       </div>
       {children}
-    </div>
+    </Card>
   )
 }
 

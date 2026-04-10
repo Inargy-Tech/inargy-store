@@ -1,10 +1,7 @@
 export function Logo({ className = "", height = 40 }) {
-  const width = typeof height === 'number' ? height * (348 / 110) : undefined;
   return (
     <svg
-      aria-hidden="true"
       height={height}
-      width={width}
       viewBox="0 0 348 110"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
@@ -30,12 +27,9 @@ export function Logo({ className = "", height = 40 }) {
 }
 
 export function BrandMark({ className = "", size = 40 }) {
-  const width = typeof size === 'number' ? size * (73 / 137) : undefined;
   return (
     <svg
-      aria-hidden="true"
       height={size}
-      width={width}
       viewBox="0 0 73 137"
       className={className}
       xmlns="http://www.w3.org/2000/svg"

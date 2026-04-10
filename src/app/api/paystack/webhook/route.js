@@ -39,7 +39,6 @@ export async function POST(request) {
   // 1. Verify Paystack signature
   const secret = process.env.PAYSTACK_SECRET_KEY
   if (!secret) {
-    console.error('PAYSTACK_SECRET_KEY not configured')
     return Response.json({ error: 'Server misconfigured' }, { status: 500 })
   }
 
@@ -49,7 +48,6 @@ export async function POST(request) {
   const hash = crypto.createHmac('sha512', secret).update(body).digest('hex')
 
   if (hash !== signature) {
-    console.error('Invalid Paystack webhook signature')
     return Response.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
@@ -71,7 +69,6 @@ export async function POST(request) {
 
     const orderId = metadata?.order_id
     if (!orderId) {
-      console.error('No order_id in Paystack metadata:', reference)
       return Response.json({ ok: true, message: 'No order_id in metadata' })
     }
 
@@ -85,7 +82,6 @@ export async function POST(request) {
       .single()
 
     if (fetchErr || !order) {
-      console.error('Order not found for webhook:', orderId)
       return Response.json({ ok: true, message: 'Order not found' })
     }
 
@@ -100,7 +96,6 @@ export async function POST(request) {
     // Allow Paystack to charge >= order total (covers customer-borne fee configurations).
     // Reject only if they paid less than the order amount.
     if (amount < order.total_kobo) {
-      console.error(`Amount too low: Paystack=${amount}, Order=${order.total_kobo}, ref=${reference}`)
       return Response.json({ ok: true, message: 'Amount below order total' })
     }
 
@@ -108,11 +103,8 @@ export async function POST(request) {
     const { data: rpcResult, error: rpcErr } = await confirmOrderViaRpc(supabase, orderId, reference)
 
     if (rpcErr) {
-      console.error('Card payment confirmation RPC failed for webhook:', rpcErr)
       return Response.json({ error: 'Update failed' }, { status: 500 })
     }
-
-    console.log(`Payment confirmed for order ${orderId}: ${reference} (${rpcResult?.message || 'ok'})`)
   }
 
   // Return 200 for all events (Paystack expects this)

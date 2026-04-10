@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { SITE } from '../../config'
-import { getProducts } from '../../lib/queries'
+import { getFeaturedProducts } from '../../lib/queries'
 import { createServerSupabase } from '../../lib/supabase-server'
 import ProductGrid from '../../components/storefront/ProductGrid'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export const metadata = {
   title: 'Shop Solar Panels, Inverters & Batteries',
@@ -23,11 +23,8 @@ const CATEGORIES = [
 
 export default async function HomePage() {
   const supabase = await createServerSupabase()
-  const { data } = await getProducts(
-    { category: '', search: '', sort: 'created_at', order: 'desc', page: 1 },
-    supabase
-  )
-  const featured = (data || []).slice(0, 8)
+  const { data } = await getFeaturedProducts(supabase)
+  const featured = data || []
 
   return (
     <div className="py-8 space-y-10">

@@ -1,34 +1,26 @@
 import { createServerSupabase } from '../lib/supabase-server'
 
-const SITE_URL = 'https://store.inargy.tech'
-
 export const revalidate = 3600
 
+const BASE_URL = 'https://store.inargy.tech'
+
 export default async function sitemap() {
-  const staticPages = [
-    { url: SITE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
-    { url: `${SITE_URL}/catalog`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+  const supabase = createServerSupabase()
+  const { data: products } = await supabase
+    .from('products')
+    .select('slug, updated_at')
+    .eq('is_active', true)
+
+  const productPages = (products || []).map((p) => ({
+    url: `${BASE_URL}/product/${p.slug}`,
+    lastModified: p.updated_at || new Date().toISOString(),
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }))
+
+  return [
+    { url: BASE_URL, lastModified: new Date().toISOString(), changeFrequency: 'daily', priority: 1.0 },
+    { url: `${BASE_URL}/catalog`, lastModified: new Date().toISOString(), changeFrequency: 'daily', priority: 0.9 },
+    ...productPages,
   ]
-
-  // Fetch active product slugs
-  let productPages = []
-  try {
-    const supabase = await createServerSupabase()
-    const { data } = await supabase
-      .from('products')
-      .select('slug, created_at')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-
-    productPages = (data || []).map((p) => ({
-      url: `${SITE_URL}/product/${p.slug}`,
-      lastModified: new Date(p.created_at),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    }))
-  } catch {
-    // Silently fail — return static pages only
-  }
-
-  return [...staticPages, ...productPages]
 }

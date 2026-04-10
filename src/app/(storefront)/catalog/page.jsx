@@ -3,7 +3,7 @@ import { SITE } from '../../../config'
 import { getProducts } from '../../../lib/queries'
 import { createServerSupabase } from '../../../lib/supabase-server'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export const metadata = {
   title: 'Catalog',
@@ -19,8 +19,9 @@ export default async function CatalogPage({ searchParams }) {
   const [sortField, sortOrder] = sortRaw.split(':')
   
   const supabaseServer = await createServerSupabase()
+  const isFeatured = category === 'featured'
   const { data, count } = await getProducts(
-    { category, search, sort: sortField, order: sortOrder, page: 1 }, 
+    { category: isFeatured ? '' : category, search, sort: sortField, order: sortOrder, page: 1, featured: isFeatured || undefined },
     supabaseServer
   )
 

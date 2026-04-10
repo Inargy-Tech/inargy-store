@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import { Mail, Lock, AlertCircle } from 'lucide-react'
 import { Logo } from '../../../assets/logo'
 import { useAuth } from '../../../contexts/AuthContext'

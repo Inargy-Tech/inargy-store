@@ -1,14 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Button } from '@heroui/react'
+import { Alert } from '@heroui/react/alert'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { Table } from '@heroui/react/table'
 import { ShoppingCart, ChevronRight } from 'lucide-react'
 import { adminGetOrders } from '../../../lib/queries'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import Pagination from '../../../components/ui/Pagination'
 import { formatNaira, formatDate } from '../../../config'
+
+const PAGE_SIZE = 20
 
 const STATUS_FILTERS = [
   { value: '', label: 'All' },
@@ -21,25 +26,30 @@ const STATUS_FILTERS = [
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
+  const [fetchError, setFetchError] = useState('')
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+
+  const load = useCallback(async (status, p) => {
+    setLoading(true)
+    setFetchError('')
+    const { data, error, count } = await adminGetOrders({ status: status || undefined, page: p })
+    if (error) setFetchError('Could not load orders. Please try again.')
+    setOrders(data || [])
+    setTotal(count || 0)
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
     setPage(1)
-  }, [statusFilter])
+    load(statusFilter, 1)
+  }, [statusFilter, load])
 
   useEffect(() => {
-    async function load() {
-      setLoading(true)
-      const { data, count } = await adminGetOrders({ status: statusFilter || undefined, page })
-      setOrders(data || [])
-      setTotal(count || 0)
-      setLoading(false)
-    }
-    load()
-  }, [statusFilter, page])
+    load(statusFilter, page)
+  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -62,73 +72,97 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
+      {fetchError && (
+        <Alert status="danger" className="mb-6">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Description>{fetchError}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <LoadingSpinner size="lg" />
         </div>
       ) : orders.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-border p-16 text-center">
+        <Card className="p-16 text-center">
           <ShoppingCart size={40} strokeWidth={1} className="text-muted mx-auto mb-4" />
           <p className="text-slate-green font-semibold">No orders found</p>
-        </div>
+        </Card>
       ) : (
-        <div className="bg-white rounded-2xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border-light bg-surface/50">
-                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Order</th>
-                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Customer</th>
-                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Date</th>
-                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Payment</th>
-                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Status</th>
-                  <th className="text-right text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Total</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-light">
-                {orders.map((order) => {
-                  const addr = order.delivery_address || {}
-                  return (
-                    <tr key={order.id} className="hover:bg-surface/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="font-medium text-slate-green hover:text-volt-dim transition-colors"
-                        >
-                          #{order.id.slice(0, 8).toUpperCase()}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="text-slate-green font-medium">{addr.full_name || '—'}</p>
-                        <p className="text-xs text-muted">{addr.phone || ''}</p>
-                      </td>
-                      <td className="px-4 py-4 text-muted">{formatDate(order.created_at)}</td>
-                      <td className="px-4 py-4 text-muted capitalize">
-                        {order.payment_method?.replace(/_/g, ' ') || '—'}
-                      </td>
-                      <td className="px-4 py-4">
-                        <StatusBadge status={order.status} />
-                      </td>
-                      <td className="px-6 py-4 text-right font-semibold text-slate-green">
-                        {formatNaira(order.total_kobo)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="p-1.5 rounded-lg text-muted hover:text-slate-green hover:bg-surface transition-colors inline-flex"
-                        >
-                          <ChevronRight size={16} />
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <Pagination page={page} pageSize={20} total={total} onPageChange={setPage} />
-        </div>
+        <>
+          <Card className="overflow-hidden">
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Orders table" className="w-full text-sm">
+                  <Table.Header className="border-b border-border-light bg-surface/50">
+                    <Table.Column id="order" isRowHeader className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">
+                      Order
+                    </Table.Column>
+                    <Table.Column id="customer" className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">
+                      Customer
+                    </Table.Column>
+                    <Table.Column id="date" className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">
+                      Date
+                    </Table.Column>
+                    <Table.Column id="payment" className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">
+                      Payment
+                    </Table.Column>
+                    <Table.Column id="status" className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">
+                      Status
+                    </Table.Column>
+                    <Table.Column id="total" className="text-right text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">
+                      Total
+                    </Table.Column>
+                    <Table.Column id="details" className="px-4 py-3" aria-label="View order" />
+                  </Table.Header>
+                  <Table.Body className="divide-y divide-border-light">
+                    {orders.map((order) => {
+                      const addr = order.delivery_address || {}
+                      return (
+                        <Table.Row key={order.id} id={order.id} className="hover:bg-surface/30 transition-colors">
+                          <Table.Cell className="px-6 py-4">
+                            <Link
+                              href={`/admin/orders/${order.id}`}
+                              className="font-medium text-slate-green hover:text-volt-dim transition-colors"
+                            >
+                              #{order.id.slice(0, 8).toUpperCase()}
+                            </Link>
+                          </Table.Cell>
+                          <Table.Cell className="px-4 py-4">
+                            <p className="text-slate-green font-medium">{addr.full_name || '—'}</p>
+                            <p className="text-xs text-muted">{addr.phone || ''}</p>
+                          </Table.Cell>
+                          <Table.Cell className="px-4 py-4 text-muted">{formatDate(order.created_at)}</Table.Cell>
+                          <Table.Cell className="px-4 py-4 text-muted capitalize">
+                            {order.payment_method?.replace(/_/g, ' ') || '—'}
+                          </Table.Cell>
+                          <Table.Cell className="px-4 py-4">
+                            <StatusBadge status={order.status} />
+                          </Table.Cell>
+                          <Table.Cell className="px-6 py-4 text-right font-semibold text-slate-green">
+                            {formatNaira(order.total_kobo)}
+                          </Table.Cell>
+                          <Table.Cell className="px-4 py-4">
+                            <Link
+                              href={`/admin/orders/${order.id}`}
+                              className="p-1.5 rounded-lg text-muted hover:text-slate-green hover:bg-surface transition-colors inline-flex"
+                            >
+                              <ChevronRight size={16} />
+                            </Link>
+                          </Table.Cell>
+                        </Table.Row>
+                      )
+                    })}
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          </Card>
+
+          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+        </>
       )}
     </div>
   )
