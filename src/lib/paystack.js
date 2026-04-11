@@ -16,7 +16,6 @@ function loadScript() {
     const script = document.createElement('script')
     script.src = PAYSTACK_INLINE_URL
     script.async = true
-    script.crossOrigin = 'anonymous'
     const nonce = getNonce()
     if (nonce) script.nonce = nonce
     script.onload = resolve
