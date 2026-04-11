@@ -108,9 +108,6 @@ export async function POST(request) {
   // 4. Verify amount: Paystack amount must cover the order total
   const paidAmount = Number(paystackTxn?.amount || 0)
   if (paidAmount < order.total_kobo) {
-    console.error(
-      `Amount mismatch on confirm: Paystack=${paidAmount}, Order=${order.total_kobo}, ref=${reference}`
-    )
     return Response.json({ error: 'Payment amount is less than order total' }, { status: 400 })
   }
 
@@ -120,7 +117,6 @@ export async function POST(request) {
   if (rpcErr) {
     const message = String(rpcErr?.message || '')
     const isStockIssue = message.toLowerCase().includes('insufficient stock')
-    console.error('Card payment confirmation RPC failed:', rpcErr)
     if (isStockIssue) {
       return Response.json({ error: 'Payment verified, but stock changed before confirmation.' }, { status: 409 })
     }

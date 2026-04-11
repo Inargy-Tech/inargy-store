@@ -24,23 +24,13 @@ Deno.serve(async (req) => {
     return new Response("Invalid signature", { status: 401 });
   }
 
-  let event: any;
-  try {
-    event = JSON.parse(body);
-  } catch {
-    return new Response("Invalid JSON", { status: 400 });
-  }
+  const event = JSON.parse(body);
 
   if (event.event !== "charge.success") {
     return new Response("OK", { status: 200 });
   }
 
-  const { reference, amount, currency, metadata } = event.data;
-
-  if (currency !== "NGN") {
-    return new Response("OK", { status: 200 });
-  }
-
+  const { reference, amount, metadata } = event.data;
   const orderId = metadata?.order_id;
 
   if (!orderId) {
@@ -66,38 +56,28 @@ Deno.serve(async (req) => {
     return new Response("OK", { status: 200 });
   }
 
-  if (order.status !== "pending") {
-    return new Response("OK", { status: 200 });
-  }
-
-  if (amount < order.total_kobo) {
-    console.error("Amount too low", {
+  if (amount !== order.total_kobo) {
+    console.error("Amount mismatch", {
       orderId,
       expected: order.total_kobo,
       received: amount,
-      reference,
     });
     return new Response("OK", { status: 200 });
   }
 
-  const { data: rpcResult, error: rpcError } = await supabase.rpc(
-    "process_confirmed_payment",
-    { p_order_id: orderId, p_payment_reference: reference },
-  );
+  if (order.status === "pending") {
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({ status: "processing", payment_reference: reference })
+      .eq("id", orderId);
 
-  if (rpcError) {
-    console.error("process_confirmed_payment failed", {
-      orderId,
-      rpcError,
-    });
-    return new Response("Update failed", { status: 500 });
+    if (updateError) {
+      console.error("Failed to update order from webhook", {
+        orderId,
+        updateError,
+      });
+    }
   }
-
-  console.log("Payment confirmed", {
-    orderId,
-    reference,
-    result: rpcResult?.message ?? "ok",
-  });
 
   return new Response("OK", { status: 200 });
 });

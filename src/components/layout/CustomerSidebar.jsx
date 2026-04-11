@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Card } from '@heroui/react/card'
 import { Package, User, CreditCard, MessageCircle, ChevronLeft } from 'lucide-react'
 
 const navItems = [
@@ -16,7 +17,7 @@ export default function CustomerSidebar() {
 
   return (
     <aside className="w-full lg:w-64 shrink-0">
-      <div className="bg-white rounded-2xl border border-border p-4">
+      <Card className="p-4">
         <Link
           href="/catalog"
           className="flex items-center gap-2 text-sm text-muted hover:text-slate-green transition-colors mb-4 px-2"
@@ -43,7 +44,7 @@ export default function CustomerSidebar() {
             )
           })}
         </nav>
-      </div>
+      </Card>
     </aside>
   )
 }

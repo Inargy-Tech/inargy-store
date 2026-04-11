@@ -1,15 +1,22 @@
 'use client'
 
-import { memo } from 'react'
-import { Button } from '@heroui/react'
+import { memo, useState, useCallback } from 'react'
+import { Button } from '@heroui/react/button'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Package } from 'lucide-react'
+import { ShoppingCart, Package, Star, Check } from 'lucide-react'
 import { useCart } from '../../contexts/CartContext'
 import NairaPrice from '../ui/NairaPrice'
 
 export default memo(function ProductCard({ product, priority = false }) {
   const { addItem } = useCart()
+  const [added, setAdded] = useState(false)
+
+  const handleAdd = useCallback(() => {
+    addItem(product)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }, [addItem, product])
 
   return (
     <div className="group bg-white rounded-2xl border border-border hover:border-volt/40 hover:shadow-lg active:shadow-md focus-within:border-volt/40 transition-all duration-300 overflow-hidden">
@@ -28,6 +35,11 @@ export default memo(function ProductCard({ product, priority = false }) {
           <div className="w-full h-full flex items-center justify-center text-muted" role="img" aria-label={product.name}>
             <Package size={48} strokeWidth={1} />
           </div>
+        )}
+        {product.featured && (
+          <span className="absolute top-2.5 right-2.5 inline-flex items-center justify-center w-7 h-7 bg-volt rounded-full shadow-sm" aria-label="Featured">
+            <Star size={13} className="fill-slate-green text-slate-green" />
+          </span>
         )}
       </Link>
 
@@ -52,10 +64,18 @@ export default memo(function ProductCard({ product, priority = false }) {
           </p>
         ) : (
           <Button
-            onPress={() => addItem(product)}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
+            onPress={handleAdd}
+            className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-full transition-colors ${
+              added
+                ? 'bg-success text-white'
+                : 'bg-slate-green text-white hover:bg-volt hover:text-slate-green'
+            }`}
           >
-            <ShoppingCart size={16} /> Add to Cart
+            {added ? (
+              <><Check size={16} /> Added</>
+            ) : (
+              <><ShoppingCart size={16} /> Add to Cart</>
+            )}
           </Button>
         )}
       </div>

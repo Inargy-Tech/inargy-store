@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react'

@@ -17,6 +17,14 @@ dist-ssr
 .env.staging
 .env.production
 .env.preprod
+.env.dev
+
+skills-lock.json
+.agents/*
+.claude/*
+.junie/*
+e2e-output/*
+tmp/*
 
 # Supabase
 supabase/.temp/

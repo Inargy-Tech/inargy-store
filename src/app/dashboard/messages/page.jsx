@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { Input } from '@heroui/react/input'
+import { TextArea } from '@heroui/react/textarea'
 import { MessageCircle, Send } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { getMessages, sendMessage, markMessageRead } from '../../../lib/queries'
@@ -24,19 +27,13 @@ export default function MessagesPage() {
   }, [user.id])
 
   async function load() {
-    const { data } = await getMessages(user.id)
+    const { data, error } = await getMessages(user.id)
+    if (error) console.error('Failed to load messages:', error.message)
     const msgs = data || []
     setMessages(msgs)
     setLoading(false)
-    // Mark unread admin replies as read
-    msgs
-      .filter((m) => !m.read && m.from_admin)
-      .forEach(async (m) => {
-        const { error: readErr } = await markMessageRead(m.id)
-        if (readErr) console.error('Failed to mark message read:', m.id)
-      })
-    // Scroll to bottom so the most recent message is visible
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    // Mark unread as read
+    msgs.filter((m) => !m.read && m.from_admin).forEach((m) => markMessageRead(m.id))
   }
 
   async function handleSend(e) {
@@ -54,7 +51,6 @@ export default function MessagesPage() {
       setBody('')
       setSubject('')
       setShowCompose(false)
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     }
   }
 
@@ -75,7 +71,7 @@ export default function MessagesPage() {
         </div>
         <Button
           onPress={() => setShowCompose(!showCompose)}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-slate-dark transition-colors"
         >
           <Send size={15} /> New Message
         </Button>
@@ -90,26 +86,26 @@ export default function MessagesPage() {
           <h2 className="text-sm font-semibold text-slate-green mb-4">New Message</h2>
           <div className="space-y-4">
             <div>
-              <label htmlFor="msg-subject" className="block text-sm font-medium text-slate-green mb-1.5">Subject</label>
-              <input
-                id="msg-subject"
+              <label className="block text-sm font-medium text-slate-green mb-1.5">Subject</label>
+              <Input
                 type="text"
+                variant="bordered"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="e.g. Question about my order"
-                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                className="w-full"
               />
             </div>
             <div>
-              <label htmlFor="msg-body" className="block text-sm font-medium text-slate-green mb-1.5">Message *</label>
-              <textarea
-                id="msg-body"
+              <label className="block text-sm font-medium text-slate-green mb-1.5">Message *</label>
+              <TextArea
                 required
+                variant="bordered"
                 rows={4}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Type your message here…"
-                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors resize-none"
+                className="w-full resize-none"
               />
             </div>
             <div className="flex gap-3">
@@ -117,7 +113,7 @@ export default function MessagesPage() {
                 type="submit"
                 isDisabled={sending || !body.trim()}
                 isLoading={sending}
-                className="flex items-center gap-2 px-5 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-slate-dark transition-colors disabled:opacity-60"
               >
                 <Send size={15} />
                 Send Message
@@ -143,11 +139,9 @@ export default function MessagesPage() {
       ) : (
         <div className="space-y-3">
           {messages.map((msg) => (
-            <div
+            <Card
               key={msg.id}
-              className={`bg-white rounded-2xl border p-5 ${
-                msg.from_admin ? 'border-volt/30' : 'border-border'
-              }`}
+              className={`p-5 ${msg.from_admin ? 'border-volt/30' : ''}`}
             >
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div className="flex items-center gap-2">
@@ -161,7 +155,7 @@ export default function MessagesPage() {
                 <p className="text-xs text-muted shrink-0">{formatDate(msg.created_at)}</p>
               </div>
               <p className="text-sm text-muted leading-relaxed whitespace-pre-line">{msg.body}</p>
-            </div>
+            </Card>
           ))}
         </div>
       )}

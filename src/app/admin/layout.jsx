@@ -1,13 +1,9 @@
-import AdminLayoutShell from './AdminLayoutShell'
+import AdminShell from '../../components/layout/AdminShell'
 
 export const metadata = {
-  title: 'Admin',
+  robots: { index: false, follow: false },
 }
 
 export default function AdminLayout({ children }) {
-  return (
-    <AdminLayoutShell>
-      {children}
-    </AdminLayoutShell>
-  )
+  return <AdminShell>{children}</AdminShell>
 }

@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button } from '@heroui/react'
-import { Mail, Lock, User, Phone, AlertCircle, CheckCircle } from 'lucide-react'
+import { Alert } from '@heroui/react/alert'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { Input } from '@heroui/react/input'
+import { Mail, Lock, User, Phone, CheckCircle } from 'lucide-react'
 import { Logo } from '../../../assets/logo'
 import { useAuth } from '../../../contexts/AuthContext'
 
@@ -48,7 +51,12 @@ export default function SignupPage() {
     setLoading(false)
 
     if (error) {
-      setError(error.message || 'Could not create account.')
+      const msg = error.message?.toLowerCase() || ''
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        setError('An account with this email already exists.')
+      } else {
+        setError('Could not create account. Please try again.')
+      }
     } else {
       setSuccess(true)
     }
@@ -59,23 +67,27 @@ export default function SignupPage() {
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <Link href="/" className="flex justify-center mb-8 text-slate-green">
-            <Logo height={32} />
+            <Logo height={40} />
           </Link>
-          <div className="bg-white rounded-2xl border border-border p-8">
-            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-success" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-green mb-2">Check your email</h2>
-            <p className="text-sm text-muted mb-6">
-              We sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account.
-            </p>
-            <Link
-              href="/auth/login"
-              className="inline-flex items-center px-6 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors"
-            >
-              Go to Login
-            </Link>
-          </div>
+          <Card className="p-8">
+            <Card.Header>
+              <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-success" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-green mb-2">Check your email</h2>
+              <p className="text-sm text-muted mb-6">
+                We sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account.
+              </p>
+            </Card.Header>
+            <Card.Footer className="justify-center">
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center px-6 py-2.5 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-slate-dark transition-colors"
+              >
+                Go to Login
+              </Link>
+            </Card.Footer>
+          </Card>
         </div>
       </div>
     )
@@ -85,113 +97,101 @@ export default function SignupPage() {
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex justify-center mb-8 text-slate-green">
-          <Logo height={32} />
+          <Logo height={40} />
         </Link>
 
-        <div className="bg-white rounded-2xl border border-border p-8">
+        <Card className="p-8">
           <h1 className="text-2xl font-bold text-slate-green mb-1">Create account</h1>
           <p className="text-sm text-muted mb-8">Join Inargy to start saving on energy</p>
 
           {error && (
-            <div id="signup-error" role="alert" className="flex items-center gap-2 p-3 mb-6 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
-              <AlertCircle size={16} className="shrink-0" />
-              {error}
-            </div>
+            <Alert status="danger" className="mb-6">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Description>{error}</Alert.Description>
+              </Alert.Content>
+            </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'signup-error' : undefined}>
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="signup-fullName" className="block text-sm font-medium text-slate-green mb-1.5">Full name</label>
+              <label className="block text-sm font-medium text-slate-green mb-1.5">Full name</label>
               <div className="relative">
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  id="signup-fullName"
-                  name="fullName"
+                <Input
                   type="text"
                   required
-                  autoComplete="name"
+                  variant="bordered"
                   value={form.fullName}
                   onChange={update('fullName')}
                   placeholder="Amara Okafor"
-                  aria-invalid={error ? 'true' : undefined}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                  className="w-full pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium text-slate-green mb-1.5">Email address</label>
+              <label className="block text-sm font-medium text-slate-green mb-1.5">Email address</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  id="signup-email"
-                  name="email"
+                <Input
                   type="email"
                   required
-                  autoComplete="email"
+                  variant="bordered"
                   value={form.email}
                   onChange={update('email')}
                   placeholder="you@example.com"
-                  aria-invalid={error ? 'true' : undefined}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                  className="w-full pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="signup-phone" className="block text-sm font-medium text-slate-green mb-1.5">
+              <label className="block text-sm font-medium text-slate-green mb-1.5">
                 Phone number <span className="text-muted font-normal">(optional)</span>
               </label>
               <div className="relative">
                 <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  id="signup-phone"
-                  name="phone"
+                <Input
                   type="tel"
-                  autoComplete="tel"
+                  variant="bordered"
                   value={form.phone}
                   onChange={update('phone')}
                   placeholder="+234 800 000 0000"
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                  className="w-full pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium text-slate-green mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-slate-green mb-1.5">Password</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  id="signup-password"
-                  name="password"
+                <Input
                   type="password"
                   required
                   minLength={8}
-                  autoComplete="new-password"
+                  variant="bordered"
                   value={form.password}
                   onChange={update('password')}
                   placeholder="Min. 8 characters"
-                  aria-invalid={error ? 'true' : undefined}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                  className="w-full pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="signup-confirmPassword" className="block text-sm font-medium text-slate-green mb-1.5">Confirm password</label>
+              <label className="block text-sm font-medium text-slate-green mb-1.5">Confirm password</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  id="signup-confirmPassword"
-                  name="confirmPassword"
+                <Input
                   type="password"
                   required
-                  autoComplete="new-password"
+                  variant="bordered"
                   value={form.confirm}
                   onChange={update('confirm')}
                   placeholder="Repeat password"
-                  aria-invalid={error ? 'true' : undefined}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+                  className="w-full pl-10"
                 />
               </div>
             </div>
@@ -200,12 +200,12 @@ export default function SignupPage() {
               type="submit"
               isDisabled={loading}
               isLoading={loading}
-              className="w-full py-3 bg-slate-green text-white font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60"
+              className="w-full py-3 bg-slate-green text-white font-semibold rounded-full hover:bg-slate-dark transition-colors disabled:opacity-60"
             >
               Create Account
             </Button>
           </form>
-        </div>
+        </Card>
 
         <p className="text-center text-sm text-muted mt-6">
           Already have an account?{' '}

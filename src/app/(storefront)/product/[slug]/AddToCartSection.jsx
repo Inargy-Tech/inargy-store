@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import { ShoppingCart, Minus, Plus, Check } from 'lucide-react'
 import { useCart } from '../../../../contexts/CartContext'
 
@@ -11,7 +11,6 @@ export default function AddToCartSection({ product }) {
   const [added, setAdded] = useState(false)
 
   function handleAddToCart() {
-    if (added) return
     addItem(product, quantity)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -19,9 +18,6 @@ export default function AddToCartSection({ product }) {
 
   return (
     <div className="flex items-center gap-4 mt-auto">
-      <div className="sr-only" role="status" aria-live="polite">
-        {added ? `${product.name} added to cart` : ''}
-      </div>
       <div className="flex items-center border border-border rounded-xl overflow-hidden">
         <Button
           variant="ghost"
@@ -35,14 +31,16 @@ export default function AddToCartSection({ product }) {
         <span className="px-4 py-3 text-sm font-semibold text-slate-green min-w-[3rem] text-center">
           {quantity}
         </span>
-        <button
-          onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-          disabled={quantity >= product.stock}
-          className="px-4 py-3 hover:bg-surface transition-colors text-slate-green disabled:opacity-30 disabled:cursor-not-allowed"
+        <Button
+          variant="light"
+          isIconOnly
+          onPress={() => setQuantity((q) => Math.min(product.stock ?? 0, q + 1))}
+          isDisabled={quantity >= (product.stock ?? 0)}
+          className="px-4 py-3 hover:bg-surface transition-colors text-slate-green rounded-none"
           aria-label="Increase quantity"
         >
           <Plus size={16} />
-        </button>
+        </Button>
       </div>
 
       <Button
@@ -51,7 +49,7 @@ export default function AddToCartSection({ product }) {
         className={`flex-1 flex items-center justify-center gap-2 py-3.5 font-semibold rounded-full transition-colors ${
           added
             ? 'bg-success text-white'
-            : 'bg-slate-green text-white hover:bg-volt hover:text-slate-green'
+            : 'bg-slate-green text-white hover:bg-slate-dark'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {added ? (

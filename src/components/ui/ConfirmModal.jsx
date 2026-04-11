@@ -1,6 +1,7 @@
 'use client'
 
-import { AlertDialog, Button } from '@heroui/react'
+import { AlertDialog } from '@heroui/react/alert-dialog'
+import { Button } from '@heroui/react/button'
 
 export default function ConfirmModal({
   isOpen,

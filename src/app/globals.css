@@ -1,5 +1,23 @@
 @import "tailwindcss";
-@import "@heroui/styles";
+@import "tw-animate-css";
+
+@layer theme, base, components, utilities;
+
+@import "@heroui/styles/base/base.css" layer(base);
+@import "@heroui/styles/themes/shared/theme.css" layer(theme);
+@import "@heroui/styles/themes/default/variables.css" layer(theme);
+
+@import "@heroui/styles/components/alert.css" layer(components);
+@import "@heroui/styles/components/alert-dialog.css" layer(components);
+@import "@heroui/styles/components/button.css" layer(components);
+@import "@heroui/styles/components/card.css" layer(components);
+@import "@heroui/styles/components/input.css" layer(components);
+@import "@heroui/styles/components/spinner.css" layer(components);
+@import "@heroui/styles/components/table.css" layer(components);
+@import "@heroui/styles/components/textarea.css" layer(components);
+
+@import "@heroui/styles/utilities";
+@import "@heroui/styles/variants";
 
 @theme inline {
   --color-slate-green: #0A2E25;
@@ -29,13 +47,13 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-up {
-  animation: fade-up 0.5s ease both;
+@keyframes breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.92); }
 }
 
-@keyframes breathe {
-  0%, 100% { opacity: 0.3; transform: scale(0.92); }
-  50% { opacity: 1; transform: scale(1); }
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
 }
 
 .animate-breathe {
@@ -44,34 +62,5 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up { animation-duration: 0.01ms !important; }
-  .animate-breathe { animation-duration: 0.01ms !important; }
-}
-
-/* U3: Scroll hint for overflow tables on mobile */
-@media (max-width: 768px) {
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-    background:
-      linear-gradient(to right, white 30%, transparent),
-      linear-gradient(to left, white 30%, transparent),
-      linear-gradient(to right, rgba(0,0,0,.08), transparent 15px),
-      linear-gradient(to left, rgba(0,0,0,.08), transparent 15px);
-    background-position: left center, right center, left center, right center;
-    background-repeat: no-repeat;
-    background-size: 20px 100%, 20px 100%, 15px 100%, 15px 100%;
-    background-attachment: local, local, scroll, scroll;
-  }
-}
-
-/* A6: Visible focus indicators for keyboard navigation */
-:focus-visible {
-  outline: 2px solid var(--color-slate-green);
-  outline-offset: 2px;
-}
-
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--color-slate-green);
-  outline-offset: 0;
+  .animate-breathe { animation: none !important; }
 }

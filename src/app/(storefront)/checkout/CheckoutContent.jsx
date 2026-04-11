@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@heroui/react/button'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingBag, AlertCircle, CheckCircle, Truck, CreditCard, Smartphone, Building2 } from 'lucide-react'
+import { ShoppingBag, AlertCircle, CheckCircle, Truck, CreditCard, Smartphone, Building2, Info } from 'lucide-react'
 import { useCart } from '../../../contexts/CartContext'
 import { useAuth } from '../../../contexts/AuthContext'
 import { createOrder, getProductsByIds } from '../../../lib/queries'
@@ -31,6 +31,7 @@ export default function CheckoutContent() {
     notes: '',
   })
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
   const [pendingCardOrder, setPendingCardOrder] = useState(null)
@@ -47,6 +48,7 @@ export default function CheckoutContent() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setInfo('')
 
     if (!form.fullName.trim() || !form.phone.trim() || !form.address.trim()) {
       setError('Please fill in all required delivery fields.')
@@ -129,7 +131,7 @@ export default function CheckoutContent() {
         } else {
           setPendingCardOrder(order)
           setLoading(false)
-          setError('Payment window was closed. Your order is saved; your cart is still here so you can retry checkout.')
+          setInfo('Payment window was closed. Your order is saved; your cart is still here so you can retry checkout.')
           return
         }
       } catch (err) {
@@ -220,6 +222,13 @@ export default function CheckoutContent() {
                 <div id="checkout-error" role="alert" className="flex items-center gap-2 p-3 mb-5 bg-danger/5 border border-danger/20 rounded-xl text-sm text-danger">
                   <AlertCircle size={16} className="shrink-0" />
                   {error}
+                </div>
+              )}
+
+              {info && (
+                <div role="status" className="flex items-center gap-2 p-3 mb-5 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                  <Info size={16} className="shrink-0" />
+                  {info}
                 </div>
               )}
 
