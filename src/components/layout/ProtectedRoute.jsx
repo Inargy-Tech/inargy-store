@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import LoadingSpinner from '../ui/LoadingSpinner'
 
 export default function ProtectedRoute({ children, adminOnly = false }) {
-  const { user, isAdmin, loading, profileLoading } = useAuth()
+  const { user, isAdminLike, loading, profileLoading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -16,10 +16,10 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
     if (!isSettled) return
     if (!user) {
       router.replace('/auth/login')
-    } else if (adminOnly && !isAdmin) {
+    } else if (adminOnly && !isAdminLike) {
       router.replace('/dashboard/orders')
     }
-  }, [user, isAdmin, isSettled, adminOnly, router, pathname])
+  }, [user, isAdminLike, isSettled, adminOnly, router, pathname])
 
   if (!isSettled) {
     return (
@@ -30,7 +30,7 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (!user) return null
-  if (adminOnly && !isAdmin) return null
+  if (adminOnly && !isAdminLike) return null
 
   return children
 }

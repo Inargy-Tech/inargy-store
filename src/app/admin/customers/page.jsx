@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Input } from '@heroui/react/input'
+import { useRouter } from 'next/navigation'
 import { Card } from '@heroui/react/card'
 import { Table } from '@heroui/react/table'
-import { Users, Search, Mail } from 'lucide-react'
+import { Users, Search, Mail, X } from 'lucide-react'
 import { adminGetCustomers } from '../../../lib/queries'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import Pagination from '../../../components/ui/Pagination'
@@ -13,11 +13,21 @@ import { formatDate } from '../../../config'
 const PAGE_SIZE = 20
 
 export default function AdminCustomersPage() {
+  const router = useRouter()
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const load = useCallback(async (q, p) => {
     setLoading(true)
@@ -42,16 +52,24 @@ export default function AdminCustomersPage() {
     <div>
       <h1 className="text-2xl font-bold text-slate-green mb-6">Customers</h1>
 
-      <div className="relative mb-6">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-        <Input
+      <div className="relative mb-6 max-w-md">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <input
           type="text"
-          variant="bordered"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or phone…"
-          className="w-full sm:w-80 pl-10 pr-4"
+          className="w-full pl-10 pr-9 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-slate-green transition-colors"
+            aria-label="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -68,7 +86,7 @@ export default function AdminCustomersPage() {
           <Card className="overflow-hidden">
             <Table>
               <Table.ScrollContainer>
-                <Table.Content aria-label="Customers table" className="w-full text-sm">
+                <Table.Content aria-label="Customers table" className="w-full text-sm" onRowAction={!isMobile ? (id) => router.push(`/admin/customers/${id}`) : undefined}>
                   <Table.Header className="border-b border-border-light bg-surface/50">
                     <Table.Column id="customer" isRowHeader className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">
                       Customer
@@ -85,7 +103,7 @@ export default function AdminCustomersPage() {
                   </Table.Header>
                   <Table.Body className="divide-y divide-border-light">
                     {customers.map((customer) => (
-                      <Table.Row key={customer.id} id={customer.id} className="hover:bg-surface/30 transition-colors">
+                      <Table.Row key={customer.id} id={customer.id} className="hover:bg-surface/50 transition-colors cursor-pointer">
                         <Table.Cell className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-slate-green text-volt rounded-full flex items-center justify-center text-sm font-bold shrink-0">

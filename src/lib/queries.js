@@ -251,6 +251,30 @@ export async function updateOrderStatus(id, status) {
   return { data, error }
 }
 
+export async function adminGetCustomerById(id) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', id)
+    .single()
+  return { data, error }
+}
+
+export async function adminGetCustomerOrders(userId, { status, page = 1 } = {}) {
+  const PAGE_SIZE = 20
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+  let query = supabase
+    .from('orders')
+    .select('*', { count: 'exact' })
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  if (status) query = query.eq('status', status)
+  query = query.range(from, to)
+  const { data, error, count } = await query
+  return { data, error, count }
+}
+
 // ─── Installments ─────────────────────────────────────────────────────────────
 
 export async function getInstallments(userId) {
@@ -262,7 +286,7 @@ export async function getInstallments(userId) {
   return { data, error }
 }
 
-export async function adminGetInstallments({ status, page = 1 } = {}) {
+export async function adminGetInstallments({ status, search, page = 1 } = {}) {
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
   let query = supabase
@@ -271,6 +295,10 @@ export async function adminGetInstallments({ status, page = 1 } = {}) {
     .order('created_at', { ascending: false })
 
   if (status) query = query.eq('status', status)
+  if (search) {
+    const term = search.trim().replace(/^#/, '')
+    query = query.or(`id.ilike.${term}%,profiles.full_name.ilike.%${term}%`)
+  }
   query = query.range(from, to)
   const { data, error, count } = await query
   return { data, error, count }
@@ -371,13 +399,119 @@ export async function adminGetCustomers({ search, page = 1 } = {}) {
 
 // ─── Admin stats ─────────────────────────────────────────────────────────────
 
+export async function adminGetChartData() {
+  const client = supabase
+
+  // Get orders from last 90 days with date, total, and status
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 90)
+
+  const [ordersRes, productsRes] = await Promise.all([
+    client
+      .from('orders')
+      .select('created_at, total_kobo, status')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .order('created_at', { ascending: true }),
+    client
+      .from('products')
+      .select('name, stock, category')
+      .eq('is_active', true)
+      .order('stock', { ascending: true })
+      .limit(10),
+  ])
+
+  const orders = ordersRes.data || []
+  const topProducts = productsRes.data || []
+
+  // --- Revenue over time (daily, last 30 days) ---
+  const revenueByDay = {}
+  const ordersByDay = {}
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().slice(0, 10)
+    revenueByDay[key] = 0
+    ordersByDay[key] = 0
+  }
+  orders.forEach((o) => {
+    const day = o.created_at.slice(0, 10)
+    if (revenueByDay[day] !== undefined) {
+      if (['processing', 'shipped', 'delivered'].includes(o.status)) {
+        revenueByDay[day] += o.total_kobo || 0
+      }
+      ordersByDay[day]++
+    }
+  })
+  const revenueTimeline = Object.entries(revenueByDay).map(([date, kobo]) => ({
+    date,
+    label: new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+    revenue: Math.round(kobo / 100),
+    orders: ordersByDay[date] || 0,
+  }))
+
+  // --- Order status breakdown ---
+  const statusCounts = {}
+  orders.forEach((o) => {
+    statusCounts[o.status] = (statusCounts[o.status] || 0) + 1
+  })
+  const orderStatusBreakdown = Object.entries(statusCounts).map(([status, count]) => ({
+    status: status.charAt(0).toUpperCase() + status.slice(1),
+    count,
+  }))
+
+  // --- Stock levels (lowest 10 products) ---
+  const stockLevels = topProducts.map((p) => ({
+    name: p.name.length > 20 ? p.name.slice(0, 20) + '…' : p.name,
+    stock: p.stock ?? 0,
+    category: p.category?.replace(/-/g, ' ') || 'Other',
+  }))
+
+  return { revenueTimeline, orderStatusBreakdown, stockLevels }
+}
+
+export async function adminGetTeam() {
+  const authorization = await getAdminAuthHeader()
+  const res = await fetch('/api/admin/team', {
+    headers: { Authorization: authorization },
+  })
+  const result = await res.json()
+  if (!res.ok) return { data: null, error: { message: result.error || 'Failed to fetch team' } }
+  return { data: result.data, error: null }
+}
+
+export async function adminCreateTeamMember(payload) {
+  const authorization = await getAdminAuthHeader()
+  const res = await fetch('/api/admin/team', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authorization },
+    body: JSON.stringify(payload),
+  })
+  const result = await res.json()
+  if (!res.ok) return { data: null, error: { message: result.error || 'Failed to create team member' } }
+  return { data: result.data, error: null }
+}
+
 export async function adminGetStats() {
   const client = supabase
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayISO = today.toISOString()
+
+  const LOW_STOCK_THRESHOLD = 5
+
   const results = await Promise.allSettled([
-    client.from('orders').select('*', { count: 'exact', head: true }),
-    client.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    client.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),
-    client.from('orders').select('total_kobo').in('status', ['processing', 'shipped', 'delivered']),
+    client.from('orders').select('*', { count: 'exact', head: true }),                                     // 0: total orders
+    client.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),             // 1: pending orders
+    client.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),              // 2: total customers
+    client.from('orders').select('total_kobo').in('status', ['processing', 'shipped', 'delivered']),        // 3: revenue data
+    client.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),         // 4: orders today
+    client.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'delivered'),           // 5: delivered orders
+    client.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),           // 6: cancelled orders
+    client.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),             // 7: active products
+    client.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true).lte('stock', LOW_STOCK_THRESHOLD), // 8: low stock
+    client.from('installments').select('*', { count: 'exact', head: true }).eq('status', 'active'),        // 9: active installments
+    client.from('messages').select('*', { count: 'exact', head: true }).eq('read', false).eq('from_admin', false), // 10: unread messages
+    client.from('orders').select('total_kobo').gte('created_at', todayISO).in('status', ['pending', 'processing', 'shipped', 'delivered']), // 11: today's revenue
   ])
 
   const val = (i) => (results[i].status === 'fulfilled' ? results[i].value : {})
@@ -386,6 +520,23 @@ export async function adminGetStats() {
   const totalCustomers = val(2).count ?? 0
   const revenueData = val(3).data || []
   const totalRevenueKobo = revenueData.reduce((s, r) => s + (r.total_kobo || 0), 0)
+  const ordersToday = val(4).count ?? 0
+  const deliveredOrders = val(5).count ?? 0
+  const cancelledOrders = val(6).count ?? 0
+  const activeProducts = val(7).count ?? 0
+  const lowStockProducts = val(8).count ?? 0
+  const activeInstallments = val(9).count ?? 0
+  const unreadMessages = val(10).count ?? 0
+  const todayRevenueData = val(11).data || []
+  const todayRevenueKobo = todayRevenueData.reduce((s, r) => s + (r.total_kobo || 0), 0)
+  const avgOrderValueKobo = totalOrders > 0 ? Math.round(totalRevenueKobo / revenueData.length) : 0
+  const conversionRate = totalOrders > 0 ? Math.round((deliveredOrders / totalOrders) * 100) : 0
 
-  return { totalOrders, pendingOrders, totalCustomers, totalRevenueKobo }
+  return {
+    totalOrders, pendingOrders, totalCustomers, totalRevenueKobo,
+    ordersToday, deliveredOrders, cancelledOrders,
+    activeProducts, lowStockProducts,
+    activeInstallments, unreadMessages,
+    todayRevenueKobo, avgOrderValueKobo, conversionRate,
+  }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CreditCard, CheckCircle } from 'lucide-react'
+import { CreditCard, CheckCircle, Search, X } from 'lucide-react'
 import { Button } from '@heroui/react/button'
 import { Card } from '@heroui/react/card'
 import { Table } from '@heroui/react/table'
@@ -24,13 +24,14 @@ export default function AdminInstallmentsPage() {
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
+  const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
 
-  const load = useCallback(async (status, p) => {
+  const load = useCallback(async (status, q, p) => {
     setLoading(true)
-    const { data, error, count } = await adminGetInstallments({ status: status || undefined, page: p })
+    const { data, error, count } = await adminGetInstallments({ status: status || undefined, search: q || undefined, page: p })
     if (error) console.error('Failed to load installments:', error.message)
     setPlans(data || [])
     setTotal(count || 0)
@@ -39,11 +40,16 @@ export default function AdminInstallmentsPage() {
 
   useEffect(() => {
     setPage(1)
-    load(statusFilter, 1)
+    load(statusFilter, search, 1)
   }, [statusFilter, load])
 
   useEffect(() => {
-    load(statusFilter, page)
+    const t = setTimeout(() => { setPage(1); load(statusFilter, search, 1) }, 350)
+    return () => clearTimeout(t)
+  }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    load(statusFilter, search, page)
   }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function markPaid(plan) {
@@ -63,6 +69,27 @@ export default function AdminInstallmentsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-green mb-6">Installments</h1>
+
+      {/* Search */}
+      <div className="relative mb-4 max-w-md">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by plan ID or customer name…"
+          className="w-full pl-10 pr-9 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-slate-green transition-colors"
+            aria-label="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {STATUS_FILTERS.map((f) => (

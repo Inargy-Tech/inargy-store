@@ -8,6 +8,7 @@ import { adminGetMessages, sendMessage, markMessageRead } from '../../../lib/que
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import Pagination from '../../../components/ui/Pagination'
 import { formatDate } from '../../../config'
+import RoleGuard from '../../../components/layout/RoleGuard'
 
 const PAGE_SIZE = 20
 
@@ -67,6 +68,7 @@ export default function AdminMessagesPage() {
   const unreadCount = messages.filter((m) => !m.read).length
 
   return (
+    <RoleGuard section="messages">
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -179,5 +181,6 @@ export default function AdminMessagesPage() {
         </>
       )}
     </div>
+    </RoleGuard>
   )
 }

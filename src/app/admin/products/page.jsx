@@ -1,22 +1,26 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@heroui/react/button'
-import { Input } from '@heroui/react/input'
 import { Card } from '@heroui/react/card'
 import { Table } from '@heroui/react/table'
 import Image from 'next/image'
-import { Plus, Search, Edit2, Trash2, Package, Star } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Package, Star, X } from 'lucide-react'
 import { adminGetProducts, deleteProduct, updateProduct } from '../../../lib/queries'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ConfirmModal from '../../../components/ui/ConfirmModal'
 import Pagination from '../../../components/ui/Pagination'
 import { formatNaira } from '../../../config'
+import { useAuth } from '../../../contexts/AuthContext'
+import { can } from '../../../lib/roles'
+import RoleGuard from '../../../components/layout/RoleGuard'
 
 const PAGE_SIZE = 20
 
 export default function AdminProductsPage() {
+  const { role } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -25,6 +29,16 @@ export default function AdminProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [togglingId, setTogglingId] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const load = useCallback(async (q = '', p = 1) => {
     setLoading(true)
@@ -83,17 +97,27 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
+      <RoleGuard section="products">
+
       {/* Search */}
-      <div className="relative mb-6">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-        <Input
+      <div className="relative mb-6 max-w-md">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <input
           type="text"
-          variant="bordered"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search products…"
-          className="w-full sm:w-80 pl-10 pr-4"
+          className="w-full pl-10 pr-9 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-green/20 focus:border-slate-green transition-colors"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-slate-green transition-colors"
+            aria-label="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -117,7 +141,7 @@ export default function AdminProductsPage() {
           <Card className="overflow-hidden">
             <Table>
               <Table.ScrollContainer>
-                <Table.Content aria-label="Products table" className="w-full text-sm">
+                <Table.Content aria-label="Products table" className="w-full text-sm" onRowAction={!isMobile ? (id) => router.push(`/admin/products/${id}`) : undefined}>
                   <Table.Header className="border-b border-border-light bg-surface/50">
                     <Table.Column id="product" isRowHeader className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">
                       Product
@@ -143,7 +167,7 @@ export default function AdminProductsPage() {
                   </Table.Header>
                   <Table.Body className="divide-y divide-border-light">
                     {products.map((product) => (
-                      <Table.Row key={product.id} id={product.id} className="hover:bg-surface/30 transition-colors">
+                      <Table.Row key={product.id} id={product.id} className="hover:bg-surface/50 transition-colors cursor-pointer">
                         <Table.Cell className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-surface rounded-lg overflow-hidden shrink-0">
@@ -170,7 +194,7 @@ export default function AdminProductsPage() {
                         <Table.Cell className="px-4 py-4 text-center text-muted">{product.stock ?? '—'}</Table.Cell>
                         <Table.Cell className="px-4 py-4 text-center">
                           <button
-                            onClick={() => toggleFeatured(product)}
+                            onClick={(e) => { e.stopPropagation(); toggleFeatured(product) }}
                             disabled={togglingId === product.id}
                             aria-label={product.featured ? 'Remove from featured' : 'Mark as featured'}
                             className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-surface transition-colors disabled:opacity-40"
@@ -192,17 +216,21 @@ export default function AdminProductsPage() {
                         </Table.Cell>
                         <Table.Cell className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
-                            <Link
-                              href={`/admin/products/${product.id}`}
-                              className="p-1.5 rounded-lg text-muted hover:text-slate-green hover:bg-surface transition-colors"
-                              aria-label="Edit"
-                            >
-                              <Edit2 size={15} />
-                            </Link>
+                            {can(role, 'productsEdit') && (
+                              <Link
+                                href={`/admin/products/${product.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 rounded-lg text-muted hover:text-slate-green hover:bg-surface transition-colors"
+                                aria-label="Edit"
+                              >
+                                <Edit2 size={15} />
+                              </Link>
+                            )}
                             <Button
                               isIconOnly
                               variant="ghost"
                               onPress={() => setDeleteTarget(product)}
+                              onClick={(e) => e.stopPropagation()}
                               className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-red-50 transition-colors min-w-0 h-auto"
                               aria-label="Delete"
                             >
@@ -237,6 +265,8 @@ export default function AdminProductsPage() {
         confirmLabel="Delete"
         danger
       />
+
+      </RoleGuard>
     </div>
   )
 }

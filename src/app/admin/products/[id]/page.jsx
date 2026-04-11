@@ -8,6 +8,7 @@ import { Button } from '@heroui/react/button'
 import { ChevronLeft, AlertCircle, CheckCircle, UploadCloud } from 'lucide-react'
 import { adminGetProductById, updateProduct, uploadProductImage } from '../../../../lib/queries'
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner'
+import RoleGuard from '../../../../components/layout/RoleGuard'
 
 const CATEGORIES = ['solar-panels', 'inverters', 'batteries', 'controllers', 'accessories']
 
@@ -78,6 +79,7 @@ export default function EditProductPage() {
   if (loading) return <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>
 
   return (
+    <RoleGuard section="productsEdit">
     <div>
       <Link href="/admin/products" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-slate-green transition-colors mb-6">
         <ChevronLeft size={16} /> Products
@@ -175,12 +177,13 @@ export default function EditProductPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button type="submit" isLoading={saving} className="px-8 py-3 bg-slate-green text-white font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60">
+          <Button type="submit" isLoading={saving} className="px-6 py-2 bg-slate-green text-white text-sm font-semibold rounded-full hover:bg-volt hover:text-slate-green transition-colors disabled:opacity-60">
             Save Changes
           </Button>
-          <Link href="/admin/products" className="inline-flex items-center justify-center px-8 py-3 border border-border text-slate-green font-semibold rounded-full hover:bg-surface transition-colors">Cancel</Link>
+          <Link href="/admin/products" className="inline-flex items-center justify-center px-6 py-2 text-sm border border-border text-slate-green font-semibold rounded-full hover:bg-danger hover:text-white hover:border-danger active:bg-red-700 active:border-red-700 transition-colors">Cancel</Link>
         </div>
       </form>
     </div>
+    </RoleGuard>
   )
 }
